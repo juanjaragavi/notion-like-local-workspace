@@ -18,8 +18,9 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get("status");
   const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 100);
 
-  let query = `SELECT s.id, s.workspace_id, s.status, s.created_at, s.updated_at,
-    (SELECT COUNT(*) FROM agent_tasks WHERE session_id = s.id) as task_count
+  let query = `SELECT s.id, s.workspace_id, s.status, s.title, s.created_at, s.updated_at,
+    (SELECT COUNT(*) FROM agent_tasks WHERE session_id = s.id) as task_count,
+    (SELECT COUNT(*) FROM agent_messages WHERE session_id = s.id) as message_count
     FROM agent_sessions s WHERE s.user_id = $1`;
   const params: unknown[] = [userId];
   let idx = 2;

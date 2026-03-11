@@ -149,6 +149,39 @@ export interface MCPToolCallResponse {
   isError?: boolean;
 }
 
+// ── Agent Streaming Events ──
+
+export type AgentStreamEventType =
+  | "status"
+  | "tool_start"
+  | "tool_complete"
+  | "thinking"
+  | "done"
+  | "error";
+
+export interface AgentStreamEvent {
+  type: AgentStreamEventType;
+  data: {
+    phase?: string;
+    message?: string;
+    tool?: string;
+    args?: Record<string, unknown>;
+    success?: boolean;
+    round?: number;
+    maxRounds?: number;
+    sessionId?: string;
+    content?: string;
+    toolCalls?: Array<{
+      name: string;
+      args: Record<string, unknown>;
+      success: boolean;
+    }>;
+    error?: string;
+  };
+}
+
+export type AgentEventCallback = (event: AgentStreamEvent) => void;
+
 // ── Orchestrator Task Decomposition ──
 
 export interface DecomposedTask {

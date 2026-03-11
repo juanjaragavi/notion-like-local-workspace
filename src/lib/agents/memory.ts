@@ -50,21 +50,20 @@ export async function saveMessage(
         timestamp,
       });
   } else {
-    // Fallback to postgres
+    // Fallback to postgres (table managed by db.ts schema init)
     const db = getDb();
-    await db.query(
-      `CREATE TABLE IF NOT EXISTS agent_messages (
-        id UUID PRIMARY KEY,
-        session_id UUID NOT NULL,
-        role VARCHAR(20) NOT NULL,
-        content TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )`,
-    );
     await db.query(
       "INSERT INTO agent_messages (id, session_id, role, content) VALUES ($1, $2, $3, $4)",
       [id, sessionId, role, content],
     );
+
+    // Set session title from the first user message
+    if (role === "user") {
+      await db.query(
+        `UPDATE agent_sessions SET title = $1 WHERE id = $2 AND title IS NULL`,
+        [content.slice(0, 120), sessionId],
+      );
+    }
   }
 }
 

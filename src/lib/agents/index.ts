@@ -25,4 +25,7 @@ export type {
   DecomposedTask,
   MCPServerConfig,
   MCPToolCallResponse,
+  AgentStreamEvent,
+  AgentStreamEventType,
+  AgentEventCallback,
 } from "./types";

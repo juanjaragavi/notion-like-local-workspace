@@ -15,6 +15,7 @@ import type {
   ToolRegistry,
   SubAgentRole,
   DecomposedTask,
+  AgentEventCallback,
 } from "./types";
 import type { Content, FunctionDeclaration, Part } from "@google/genai";
 
@@ -45,6 +46,7 @@ export class AgentOrchestrator {
     userMessage: string,
     ctx: AgentContext,
     history: AgentMessage[] = [],
+    onEvent?: AgentEventCallback,
   ): Promise<AgentResponse> {
     // Create or reuse session
     const sessionId = ctx.sessionId || (await this.createSession(ctx));
@@ -86,6 +88,19 @@ export class AgentOrchestrator {
     while (rounds < MAX_TOOL_ROUNDS) {
       rounds++;
 
+      onEvent?.({
+        type: "thinking",
+        data: {
+          round: rounds,
+          maxRounds: MAX_TOOL_ROUNDS,
+          phase: "reasoning",
+          message:
+            rounds === 1
+              ? "Analyzing your request..."
+              : `Processing round ${rounds}...`,
+        },
+      });
+
       const dynamicSystemPrompt = ctx.longTermMemory
         ? `${this.systemPrompt}\n\nProject Status & Context (Semantic Memory):\n${ctx.longTermMemory}`
         : this.systemPrompt;
@@ -126,6 +141,24 @@ export class AgentOrchestrator {
           .map((p) => p.text)
           .join("");
         await this.completeTask(mainTaskId, { message: text }, "completed");
+
+        onEvent?.({
+          type: "done",
+          data: {
+            content: text || "Done.",
+            sessionId,
+            toolCalls: allToolCalls.map((tc) => ({
+              name: tc.name,
+              args: tc.args,
+              success: !(
+                tc.result &&
+                typeof tc.result === "object" &&
+                "error" in (tc.result as Record<string, unknown>)
+              ),
+            })),
+          },
+        });
+
         return {
           message: text || "Done.",
           toolCalls: allToolCalls,
@@ -145,6 +178,15 @@ export class AgentOrchestrator {
           const toolArgs = (fc.args || {}) as Record<string, unknown>;
           const tool = registry.get(toolName);
 
+          onEvent?.({
+            type: "tool_start",
+            data: {
+              tool: toolName,
+              args: toolArgs,
+              message: this.describeToolAction(toolName, toolArgs),
+            },
+          });
+
           // Record sub-task
           const taskId = await this.recordTask(sessionId, {
             agentRole: this.inferAgentRole(toolName),
@@ -161,6 +203,14 @@ export class AgentOrchestrator {
               result as Record<string, unknown>,
               "failed",
             );
+            onEvent?.({
+              type: "tool_complete",
+              data: {
+                tool: toolName,
+                success: false,
+                message: `Unknown tool: ${toolName}`,
+              },
+            });
           } else {
             try {
               result = await tool.handler(toolArgs, ctx);
@@ -171,6 +221,14 @@ export class AgentOrchestrator {
                   : { value: result },
                 "completed",
               );
+              onEvent?.({
+                type: "tool_complete",
+                data: {
+                  tool: toolName,
+                  success: true,
+                  message: this.describeToolResult(toolName, result),
+                },
+              });
             } catch (err) {
               result = {
                 error:
@@ -181,6 +239,17 @@ export class AgentOrchestrator {
                 result as Record<string, unknown>,
                 "failed",
               );
+              onEvent?.({
+                type: "tool_complete",
+                data: {
+                  tool: toolName,
+                  success: false,
+                  message:
+                    err instanceof Error
+                      ? err.message
+                      : "Tool execution failed",
+                },
+              });
             }
           }
 
@@ -204,9 +273,29 @@ export class AgentOrchestrator {
       { message: "Max tool rounds reached" },
       "completed",
     );
+
+    const maxRoundsMsg =
+      "I reached the maximum number of tool calls for this request. Here's what I found so far.";
+
+    onEvent?.({
+      type: "done",
+      data: {
+        content: maxRoundsMsg,
+        sessionId,
+        toolCalls: allToolCalls.map((tc) => ({
+          name: tc.name,
+          args: tc.args,
+          success: !(
+            tc.result &&
+            typeof tc.result === "object" &&
+            "error" in (tc.result as Record<string, unknown>)
+          ),
+        })),
+      },
+    });
+
     return {
-      message:
-        "I reached the maximum number of tool calls for this request. Here's what I found so far.",
+      message: maxRoundsMsg,
       toolCalls: allToolCalls,
       sessionId,
       tasks,
@@ -359,6 +448,71 @@ export class AgentOrchestrator {
     } catch {
       // Non-critical
     }
+  }
+
+  /**
+   * Generate a human-readable description of what a tool is doing.
+   */
+  private describeToolAction(
+    toolName: string,
+    args: Record<string, unknown>,
+  ): string {
+    const descriptions: Record<string, (a: Record<string, unknown>) => string> =
+      {
+        search_emails: (a) =>
+          `Searching emails${a.query ? ` for "${a.query}"` : ""}`,
+        read_email: () => "Reading email content",
+        send_email: (a) => `Sending email${a.to ? ` to ${a.to}` : ""}`,
+        get_upcoming_events: () => "Fetching upcoming calendar events",
+        get_today_schedule: () => "Getting today's schedule",
+        create_calendar_event: (a) =>
+          `Creating event${a.summary ? `: ${a.summary}` : ""}`,
+        update_calendar_event: () => "Updating calendar event",
+        delete_calendar_event: () => "Deleting calendar event",
+        list_action_items: () => "Loading action items",
+        create_action_item: (a) =>
+          `Creating task${a.title ? `: ${a.title}` : ""}`,
+        update_action_item: () => "Updating action item",
+        list_pages: () => "Listing workspace pages",
+        read_page: (a) => `Reading page${a.title ? `: ${a.title}` : ""}`,
+        create_page: (a) => `Creating page${a.title ? `: ${a.title}` : ""}`,
+        update_page: () => "Updating page content",
+        list_transcriptions: () => "Loading transcriptions",
+        process_transcription_email: () => "Processing transcription email",
+        read_transcription: () => "Reading transcription",
+        list_directory: (a) => `Listing files${a.path ? ` in ${a.path}` : ""}`,
+        read_local_file: (a) => `Reading file${a.path ? `: ${a.path}` : ""}`,
+        write_local_file: (a) => `Writing file${a.path ? `: ${a.path}` : ""}`,
+        create_directory: (a) =>
+          `Creating directory${a.path ? `: ${a.path}` : ""}`,
+        move_file: () => "Moving file",
+        delete_file: () => "Deleting file",
+        execute_shell_command: (a) =>
+          `Running command${a.command ? `: ${String(a.command).slice(0, 40)}` : ""}`,
+        run_applescript: () => "Running AppleScript",
+        get_system_info: () => "Getting system info",
+        open_application: (a) => `Opening ${a.name || "application"}`,
+        discover_skills: () => "Discovering available skills",
+      };
+    const fn = descriptions[toolName];
+    return fn ? fn(args) : `Executing ${toolName.replace(/_/g, " ")}`;
+  }
+
+  /**
+   * Generate a human-readable summary of a tool's result.
+   */
+  private describeToolResult(toolName: string, result: unknown): string {
+    if (!result || typeof result !== "object") return "Completed";
+    const r = result as Record<string, unknown>;
+    if (Array.isArray(r.emails)) return `Found ${r.emails.length} email(s)`;
+    if (Array.isArray(r.events)) return `Found ${r.events.length} event(s)`;
+    if (Array.isArray(r.items)) return `Found ${r.items.length} item(s)`;
+    if (Array.isArray(r.pages)) return `Found ${r.pages.length} page(s)`;
+    if (Array.isArray(r.files)) return `Found ${r.files.length} file(s)`;
+    if (Array.isArray(r.skills)) return `Found ${r.skills.length} skill(s)`;
+    if (r.id) return "Created successfully";
+    if (r.success) return "Completed successfully";
+    return "Completed";
   }
 
   /**

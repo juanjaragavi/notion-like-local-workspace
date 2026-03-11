@@ -16,7 +16,11 @@ import {
   primeDriveMetadataCache,
   searchGoogleWorkspace,
 } from "@/lib/google-workspace";
-import type { AgentContext, AgentMessage } from "@/lib/agents";
+import type {
+  AgentContext,
+  AgentMessage,
+  AgentStreamEvent,
+} from "@/lib/agents";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -95,6 +99,145 @@ export async function POST(req: NextRequest) {
     await extractAndStoreMemory(ws.id, message.trim());
   }
 
+  const orchestrator = getOrchestrator();
+
+  // Check if client accepts SSE streaming
+  const acceptsStream = req.headers
+    .get("accept")
+    ?.includes("text/event-stream");
+
+  if (acceptsStream) {
+    // ── SSE Streaming Response ──
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        const emit = (event: AgentStreamEvent) => {
+          try {
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify(event)}\n\n`),
+            );
+          } catch {
+            // Stream may have been closed by client
+          }
+        };
+
+        try {
+          emit({
+            type: "status",
+            data: { phase: "searching", message: "Searching workspace..." },
+          });
+
+          const workspaceSearch = await searchGoogleWorkspace({
+            userKey: userId,
+            query: message.trim(),
+            accessToken,
+            refreshToken,
+            grantedScopes: session.grantedScopes,
+            maxResults: 8,
+          });
+
+          emit({
+            type: "status",
+            data: { phase: "context", message: "Loading context..." },
+          });
+
+          const longTermMemory = await getSemanticContext(ws.id);
+
+          const ctx: AgentContext = {
+            userId,
+            workspaceId: ws.id,
+            accessToken,
+            refreshToken,
+            sessionId: body.sessionId,
+            workspaceSearch,
+            longTermMemory,
+          };
+
+          emit({
+            type: "thinking",
+            data: {
+              phase: "reasoning",
+              message: "Reasoning about your request...",
+            },
+          });
+
+          let result;
+          if (body.subAgent) {
+            result = await orchestrator.runSubAgent(
+              body.subAgent,
+              message.trim(),
+              ctx,
+              history,
+            );
+          } else {
+            result = await orchestrator.processMessage(
+              message.trim(),
+              ctx,
+              history,
+              emit,
+            );
+          }
+
+          setSearchContext(
+            buildSearchContextKey(userId, result.sessionId || body.sessionId),
+            workspaceSearch,
+          );
+
+          // Save messages to memory
+          if (result.sessionId || body.sessionId) {
+            const activeSession = result.sessionId || body.sessionId;
+            if (activeSession) {
+              if (!body.sessionId) {
+                await saveMessage(activeSession, "user", message.trim());
+                await extractAndStoreMemory(ws.id, message.trim());
+              }
+              await saveMessage(activeSession, "agent", result.message);
+              await extractAndStoreMemory(ws.id, result.message);
+            }
+          }
+
+          // Send final done event (orchestrator also sends one, but this ensures it)
+          emit({
+            type: "done",
+            data: {
+              content: result.message,
+              sessionId: result.sessionId,
+              toolCalls: result.toolCalls.map((tc) => ({
+                name: tc.name,
+                args: tc.args,
+                success: !(
+                  tc.result &&
+                  typeof tc.result === "object" &&
+                  "error" in (tc.result as Record<string, unknown>)
+                ),
+              })),
+            },
+          });
+        } catch (err) {
+          console.error("[Agent] Stream Error:", err);
+          emit({
+            type: "error",
+            data: {
+              error:
+                err instanceof Error ? err.message : "Agent processing failed",
+            },
+          });
+        } finally {
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+      },
+    });
+  }
+
+  // ── Standard JSON Response (backwards compatible) ──
   void primeDriveMetadataCache({
     userKey: userId,
     accessToken,
@@ -122,8 +265,6 @@ export async function POST(req: NextRequest) {
     longTermMemory,
   };
 
-  const orchestrator = getOrchestrator();
-
   try {
     let result;
     if (body.subAgent) {
@@ -142,12 +283,10 @@ export async function POST(req: NextRequest) {
       workspaceSearch,
     );
 
-    // Save the agent message to memory
     if (result.sessionId || body.sessionId) {
       const activeSession = result.sessionId || body.sessionId;
       if (activeSession) {
         if (!body.sessionId) {
-          // If we didn't save the user message earlier because we didn't have the session ID:
           await saveMessage(activeSession, "user", message.trim());
           await extractAndStoreMemory(ws.id, message.trim());
         }
@@ -162,7 +301,6 @@ export async function POST(req: NextRequest) {
       toolCalls: result.toolCalls.map((tc) => ({
         name: tc.name,
         args: tc.args,
-        // Don't expose raw tool results to client — just metadata
         success: !(
           tc.result &&
           typeof tc.result === "object" &&

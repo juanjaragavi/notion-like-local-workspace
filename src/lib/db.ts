@@ -157,5 +157,19 @@ async function initSchema(queryFn: (text: string) => Promise<unknown>) {
     CREATE INDEX IF NOT EXISTS idx_agent_tasks_status ON agent_tasks(status);
     CREATE INDEX IF NOT EXISTS idx_skills_category ON skills(category);
     CREATE INDEX IF NOT EXISTS idx_skills_agent_role ON skills(agent_role);
+
+    -- Chat history persistence
+    ALTER TABLE agent_sessions ADD COLUMN IF NOT EXISTS title TEXT;
+
+    CREATE TABLE IF NOT EXISTS agent_messages (
+      id TEXT PRIMARY KEY,
+      session_id TEXT NOT NULL REFERENCES agent_sessions(id) ON DELETE CASCADE,
+      role TEXT NOT NULL,
+      content TEXT NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_agent_messages_session ON agent_messages(session_id);
+    CREATE INDEX IF NOT EXISTS idx_agent_messages_created ON agent_messages(session_id, created_at);
   `);
 }
