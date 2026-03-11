@@ -1,5 +1,21 @@
 import { google } from "googleapis";
 
+import { getDb } from "@/lib/db";
+import { getNamedCache } from "@/lib/server-cache";
+
+type RefreshedToken = {
+  accessToken: string;
+  expiresAt?: number;
+  scope?: string;
+  tokenType?: string;
+};
+
+const tokenCache = getNamedCache<RefreshedToken>(
+  "google-oauth-tokens",
+  55 * 60_000,
+  100,
+);
+
 export function getOAuth2Client() {
   return new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
@@ -11,10 +27,34 @@ export function getOAuth2Client() {
 
 export function getAuthedClient(accessToken: string, refreshToken?: string) {
   const client = getOAuth2Client();
+  const cachedToken = refreshToken ? tokenCache.get(refreshToken) : undefined;
   client.setCredentials({
-    access_token: accessToken,
+    access_token: cachedToken?.accessToken || accessToken,
     refresh_token: refreshToken,
+    expiry_date: cachedToken?.expiresAt,
   });
+
+  if (refreshToken) {
+    const originalRequest = client.request.bind(client);
+    client.request = async <T>(opts: T) => {
+      try {
+        return await originalRequest(opts);
+      } catch (error) {
+        if (!shouldRefreshToken(error)) {
+          throw error;
+        }
+
+        const refreshedToken = await refreshGoogleAccessToken(refreshToken);
+        client.setCredentials({
+          access_token: refreshedToken.accessToken,
+          refresh_token: refreshToken,
+          expiry_date: refreshedToken.expiresAt,
+        });
+        return originalRequest(opts);
+      }
+    };
+  }
+
   return client;
 }
 
@@ -36,6 +76,29 @@ export function getDriveClient(accessToken: string, refreshToken?: string) {
 export function getDocsClient(accessToken: string, refreshToken?: string) {
   const auth = getAuthedClient(accessToken, refreshToken);
   return google.docs({ version: "v1", auth });
+}
+
+export async function listDriveFiles(
+  accessToken: string,
+  refreshToken?: string,
+  input?: {
+    query?: string;
+    pageToken?: string;
+    pageSize?: number;
+  },
+) {
+  const drive = getDriveClient(accessToken, refreshToken);
+  const res = await drive.files.list({
+    q: input?.query || undefined,
+    pageToken: input?.pageToken,
+    pageSize: input?.pageSize || 20,
+    orderBy: "modifiedTime desc",
+    includeItemsFromAllDrives: true,
+    supportsAllDrives: true,
+    fields:
+      "nextPageToken,files(id,name,mimeType,modifiedTime,webViewLink,iconLink,size,description)",
+  });
+  return res.data;
 }
 
 export async function listGmailMessages(
@@ -426,4 +489,89 @@ export async function sendGmailMessage(
     },
   });
   return res.data;
+}
+
+async function refreshGoogleAccessToken(refreshToken: string) {
+  const cached = tokenCache.get(refreshToken);
+  if (cached?.accessToken) {
+    return cached;
+  }
+
+  const body = new URLSearchParams({
+    client_id: process.env.GOOGLE_CLIENT_ID || "",
+    client_secret: process.env.GOOGLE_CLIENT_SECRET || "",
+    grant_type: "refresh_token",
+    refresh_token: refreshToken,
+  });
+
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+
+  const payload = (await response.json()) as {
+    access_token?: string;
+    expires_in?: number;
+    scope?: string;
+    token_type?: string;
+    error?: string;
+    error_description?: string;
+  };
+
+  if (!response.ok || !payload.access_token) {
+    throw new Error(
+      payload.error_description ||
+        payload.error ||
+        "Google token refresh failed",
+    );
+  }
+
+  const refreshedToken: RefreshedToken = {
+    accessToken: payload.access_token,
+    expiresAt: payload.expires_in
+      ? Date.now() + payload.expires_in * 1000 - 60_000
+      : undefined,
+    scope: payload.scope,
+    tokenType: payload.token_type,
+  };
+
+  tokenCache.set(refreshToken, refreshedToken);
+
+  try {
+    const db = getDb();
+    await db.query(
+      "UPDATE accounts SET access_token = $1, scope = COALESCE($2, scope), token_type = COALESCE($3, token_type), expires_at = $4 WHERE refresh_token = $5 AND provider = 'google'",
+      [
+        refreshedToken.accessToken,
+        refreshedToken.scope || null,
+        refreshedToken.tokenType || null,
+        refreshedToken.expiresAt
+          ? Math.floor(refreshedToken.expiresAt / 1000)
+          : null,
+        refreshToken,
+      ],
+    );
+  } catch {
+    // Best effort only.
+  }
+
+  return refreshedToken;
+}
+
+function shouldRefreshToken(error: unknown) {
+  const candidate = error as {
+    code?: number;
+    status?: number;
+    response?: { status?: number; data?: { error?: { status?: string } } };
+    message?: string;
+  };
+  const status =
+    candidate.code || candidate.status || candidate.response?.status;
+  return (
+    status === 401 ||
+    status === 403 ||
+    candidate.response?.data?.error?.status === "UNAUTHENTICATED" ||
+    /invalid credentials|invalid_grant|auth/i.test(candidate.message || "")
+  );
 }

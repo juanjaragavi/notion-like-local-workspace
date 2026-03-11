@@ -12,6 +12,8 @@ import {
   Minimize2,
 } from "lucide-react";
 
+import { GlobalWorkspaceSearch } from "@/components/GlobalWorkspaceSearch";
+
 interface ChatMessage {
   role: "user" | "agent";
   content: string;
@@ -25,6 +27,7 @@ export function AgentPanel({ embedded = false }: { embedded?: boolean }) {
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [minimized, setMinimized] = useState(false);
+  const [sessionId, setSessionId] = useState<string | undefined>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -61,12 +64,15 @@ export function AgentPanel({ embedded = false }: { embedded?: boolean }) {
       const res = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, history }),
+        body: JSON.stringify({ message: text, history, sessionId }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
+        if (data.sessionId) {
+          setSessionId(data.sessionId);
+        }
         const agentMsg: ChatMessage = {
           role: "agent",
           content: data.message || "Done.",
@@ -158,6 +164,13 @@ export function AgentPanel({ embedded = false }: { embedded?: boolean }) {
             </button>
           </div>
         )}
+      </div>
+
+      <div className="border-b border-neutral-700 bg-neutral-900/80 px-4 py-3">
+        <GlobalWorkspaceSearch
+          contextSource="agent"
+          placeholder="Search Gmail, Calendar, and Drive inside chat"
+        />
       </div>
 
       {/* Messages */}

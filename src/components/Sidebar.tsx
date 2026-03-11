@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   LayoutDashboard,
   FileText,
@@ -43,6 +43,8 @@ export function Sidebar({
   const [collapsed, setCollapsed] = useState(false);
   const [shuttingDown, setShuttingDown] = useState(false);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentTab = searchParams.get("tab");
 
   const handleQuit = useCallback(async () => {
     if (shuttingDown) return;
@@ -70,7 +72,7 @@ export function Sidebar({
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1 rounded hover:bg-neutral-800"
+          className="cursor-pointer p-1 rounded hover:bg-neutral-800"
         >
           {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </button>
@@ -78,14 +80,16 @@ export function Sidebar({
 
       <nav className="flex-1 py-2 overflow-y-auto">
         {NAV_ITEMS.map((item) => {
-          const active =
-            pathname === item.href ||
-            (item.href.includes("?") && pathname === "/dashboard");
+          const itemUrl = new URL(item.href, "http://localhost");
+          const itemTab = itemUrl.searchParams.get("tab");
+          const active = itemTab
+            ? pathname === itemUrl.pathname && currentTab === itemTab
+            : pathname === itemUrl.pathname && !currentTab;
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-2 text-sm transition-colors ${
+              className={`flex cursor-pointer items-center gap-3 px-4 py-2 text-sm transition-colors ${
                 active
                   ? "bg-neutral-800 text-white"
                   : "hover:bg-neutral-800/50 text-neutral-400"
@@ -102,7 +106,7 @@ export function Sidebar({
         {!collapsed && (
           <Link
             href="/dashboard?tab=pages&new=1"
-            className="flex items-center gap-2 w-full px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 rounded text-white transition-colors"
+            className="flex cursor-pointer items-center gap-2 w-full px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 rounded text-white transition-colors"
           >
             <Plus size={16} />
             New Page
@@ -137,7 +141,7 @@ export function Sidebar({
             onClick={() => {
               window.location.href = "/api/auth/signout";
             }}
-            className="p-1 rounded hover:bg-neutral-800 text-neutral-500"
+            className="cursor-pointer p-1 rounded hover:bg-neutral-800 text-neutral-500"
             title="Sign out"
           >
             <LogOut size={14} />
@@ -148,7 +152,7 @@ export function Sidebar({
             id="quit-workspace-btn"
             onClick={handleQuit}
             disabled={shuttingDown}
-            className={`flex items-center gap-2 w-full mt-2 px-3 py-2 text-xs rounded transition-colors ${
+            className={`flex cursor-pointer items-center gap-2 w-full mt-2 px-3 py-2 text-xs rounded transition-colors ${
               shuttingDown
                 ? "bg-red-900/30 text-red-400 cursor-wait"
                 : "bg-red-950/40 hover:bg-red-900/60 text-red-400 hover:text-red-300"

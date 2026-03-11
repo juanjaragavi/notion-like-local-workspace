@@ -1,4 +1,5 @@
 import type { FunctionDeclaration } from "@google/genai";
+import type { WorkspaceSearchResponse } from "@/lib/google-workspace";
 
 /** Roles for conversation history */
 export type MessageRole = "user" | "agent" | "system" | "tool";
@@ -25,6 +26,7 @@ export interface AgentContext {
   accessToken: string;
   refreshToken?: string;
   sessionId?: string;
+  workspaceSearch?: WorkspaceSearchResponse;
 }
 
 /** A tool that the agent can invoke */

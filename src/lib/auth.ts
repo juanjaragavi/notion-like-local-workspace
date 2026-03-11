@@ -26,7 +26,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           ].join(" "),
           access_type: "offline",
           include_granted_scopes: "true",
-          prompt: "select_account",
+          prompt: "consent select_account",
         },
       },
     }),
@@ -67,8 +67,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const existingAccount = resAcct.rows[0] as { id: string } | undefined;
         if (!existingAccount) {
           await db.query(
-            `INSERT INTO accounts (id, user_id, provider, provider_account_id, access_token, refresh_token, expires_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            `INSERT INTO accounts (
+              id,
+              user_id,
+              provider,
+              provider_account_id,
+              access_token,
+              refresh_token,
+              scope,
+              token_type,
+              expires_at
+            )
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
             [
               uuidv4(),
               userId,
@@ -76,15 +86,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               account.providerAccountId,
               account.access_token,
               account.refresh_token,
+              account.scope,
+              account.token_type,
               account.expires_at,
             ],
           );
         } else {
           await db.query(
-            "UPDATE accounts SET access_token = $1, refresh_token = COALESCE($2, refresh_token), expires_at = $3 WHERE provider = $4 AND provider_account_id = $5",
+            "UPDATE accounts SET access_token = $1, refresh_token = COALESCE($2, refresh_token), scope = COALESCE($3, scope), token_type = COALESCE($4, token_type), expires_at = $5 WHERE provider = $6 AND provider_account_id = $7",
             [
               account.access_token,
               account.refresh_token,
+              account.scope,
+              account.token_type,
               account.expires_at,
               account.provider,
               account.providerAccountId,

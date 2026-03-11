@@ -50,9 +50,14 @@ async function initSchema(queryFn: (text: string) => Promise<unknown>) {
       provider_account_id TEXT NOT NULL,
       access_token TEXT,
       refresh_token TEXT,
+      scope TEXT,
+      token_type TEXT,
       expires_at INTEGER,
       UNIQUE(provider, provider_account_id)
     );
+
+    ALTER TABLE accounts ADD COLUMN IF NOT EXISTS scope TEXT;
+    ALTER TABLE accounts ADD COLUMN IF NOT EXISTS token_type TEXT;
 
     CREATE TABLE IF NOT EXISTS workspaces (
       id TEXT PRIMARY KEY,

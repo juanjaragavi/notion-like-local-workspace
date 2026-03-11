@@ -71,7 +71,7 @@ export class AgentOrchestrator {
     );
 
     // Build conversation contents from history
-    const contents: Content[] = this.buildContents(history, userMessage);
+    const contents: Content[] = this.buildContents(history, userMessage, ctx);
     const allToolCalls: ToolCallResult[] = [];
 
     // Record the main task
@@ -396,8 +396,20 @@ export class AgentOrchestrator {
   private buildContents(
     history: AgentMessage[],
     userMessage: string,
+    ctx: AgentContext,
   ): Content[] {
     const contents: Content[] = [];
+
+    if (ctx.workspaceSearch && ctx.workspaceSearch.results.length > 0) {
+      contents.push({
+        role: "user",
+        parts: [
+          {
+            text: this.buildWorkspaceSearchContext(ctx.workspaceSearch),
+          },
+        ],
+      });
+    }
 
     for (const msg of history) {
       if (msg.role === "user") {
@@ -410,6 +422,24 @@ export class AgentOrchestrator {
 
     contents.push({ role: "user", parts: [{ text: userMessage }] });
     return contents;
+  }
+
+  private buildWorkspaceSearchContext(
+    search: NonNullable<AgentContext["workspaceSearch"]>,
+  ) {
+    const lines = search.results
+      .slice(0, 8)
+      .map(
+        (result, index) =>
+          `${index + 1}. [${result.source}] ${result.title} | ${result.timestamp} | ${result.snippet} | ${result.url}`,
+      )
+      .join("\n");
+
+    return [
+      `Workspace search context for the current user query: ${search.query}`,
+      "Use these results as live Gmail, Calendar, and Drive evidence when answering.",
+      lines,
+    ].join("\n");
   }
 }
 

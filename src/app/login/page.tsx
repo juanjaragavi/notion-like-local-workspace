@@ -40,7 +40,14 @@ export default function LoginPage() {
 
         <div className="space-y-3 mb-6">
           <button
-            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+            onClick={() =>
+              signIn("google", {
+                callbackUrl: "/dashboard",
+                prompt: "consent",
+                access_type: "offline",
+                include_granted_scopes: "true",
+              })
+            }
             className="flex items-center justify-center gap-3 w-full px-4 py-3 bg-white hover:bg-neutral-100 text-neutral-900 rounded-lg text-sm font-medium transition-colors"
           >
             <Chrome size={18} />

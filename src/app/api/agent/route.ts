@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  buildSearchContextKey,
+  setSearchContext,
+} from "@/lib/agents/search-context";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { getOrchestrator } from "@/lib/agents";
+import {
+  primeDriveMetadataCache,
+  searchGoogleWorkspace,
+} from "@/lib/google-workspace";
 import type { AgentContext, AgentMessage } from "@/lib/agents";
 
 export async function POST(req: NextRequest) {
@@ -64,12 +72,28 @@ export async function POST(req: NextRequest) {
     ? body.history.slice(-20)
     : [];
 
+  void primeDriveMetadataCache({
+    userKey: userId,
+    accessToken,
+    refreshToken,
+  }).catch(() => undefined);
+
+  const workspaceSearch = await searchGoogleWorkspace({
+    userKey: userId,
+    query: message.trim(),
+    accessToken,
+    refreshToken,
+    grantedScopes: session.grantedScopes,
+    maxResults: 8,
+  });
+
   const ctx: AgentContext = {
     userId,
     workspaceId: ws.id,
     accessToken,
     refreshToken,
     sessionId: body.sessionId,
+    workspaceSearch,
   };
 
   const orchestrator = getOrchestrator();
@@ -86,6 +110,11 @@ export async function POST(req: NextRequest) {
     } else {
       result = await orchestrator.processMessage(message.trim(), ctx, history);
     }
+
+    setSearchContext(
+      buildSearchContextKey(userId, result.sessionId || body.sessionId),
+      workspaceSearch,
+    );
 
     return NextResponse.json({
       message: result.message,
