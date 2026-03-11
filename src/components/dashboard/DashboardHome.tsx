@@ -143,7 +143,7 @@ export async function DashboardHome({
   refreshToken?: string;
   grantedScopes?: string[];
 }) {
-  const [initialData, modules] = await Promise.all([
+  const [initialDataResult, modulesResult] = await Promise.allSettled([
     getDashboardWidgetBundle({
       userKey,
       accessToken,
@@ -152,6 +152,32 @@ export async function DashboardHome({
     }),
     getModuleSummaries(userKey),
   ]);
+
+  const initialData: Parameters<typeof DashboardWidgets>[0]["initialData"] =
+    initialDataResult.status === "fulfilled"
+      ? initialDataResult.value
+      : {
+          auth: {
+            ok: false,
+            missingScopes: [],
+            message: "Data temporarily unavailable.",
+          },
+          unreadCount: null,
+          todayEvents: [],
+          gmailPreview: { items: [], nextPageToken: null },
+          calendarPreview: { items: [], nextPageToken: null },
+          errors: {},
+          generatedAt: new Date().toISOString(),
+        };
+
+  const modules: ModuleSummary =
+    modulesResult.status === "fulfilled"
+      ? modulesResult.value
+      : {
+          pages: { total: 0, recent: [] },
+          actionItems: { total: 0, pending: 0, overdue: 0, recent: [] },
+          transcriptions: { total: 0, recent: [] },
+        };
 
   void primeDriveMetadataCache({
     userKey,

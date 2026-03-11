@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/api/auth"];
-
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // ── Auth gate ────────────────────────────────────────────────────────
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
+  // ── Auth routes — pass through without cache headers ─────────────
+  // OAuth callback/signin routes must not have cache-control interference
+  // because they rely on Set-Cookie headers for PKCE state and CSRF.
+  if (pathname.startsWith("/api/auth")) {
+    return NextResponse.next();
+  }
+
+  // ── Public pages (login) — no auth check, apply cache headers ────
+  if (pathname === "/login" || pathname.startsWith("/login")) {
     const response = NextResponse.next();
     setCacheHeaders(response);
     return response;
