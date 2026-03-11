@@ -100,6 +100,7 @@ export async function PATCH(req: NextRequest) {
   for (const [key, col] of [
     ["title", "title"],
     ["content", "content"],
+    ["contentMarkdown", "content_markdown"],
     ["icon", "icon"],
     ["coverImage", "cover_image"],
     ["parentId", "parent_id"],

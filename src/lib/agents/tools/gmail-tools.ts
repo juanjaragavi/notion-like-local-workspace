@@ -52,6 +52,28 @@ export const searchEmails: AgentTool = {
       const from = getHeader(headers, "From");
       const date = getHeader(headers, "Date");
       const snippet = msg.snippet || "";
+
+      // Extract attachment info
+      const attachments: Array<{ filename: string; mimeType: string }> = [];
+      const parts = (msg.payload?.parts || []) as Array<
+        Record<string, unknown>
+      >;
+      const extractParts = (partList: Array<Record<string, unknown>>) => {
+        for (const part of partList) {
+          const filename = part.filename as string | undefined;
+          if (filename && filename.length > 0) {
+            attachments.push({
+              filename,
+              mimeType: (part.mimeType as string) || "unknown",
+            });
+          }
+          if (part.parts) {
+            extractParts(part.parts as Array<Record<string, unknown>>);
+          }
+        }
+      };
+      extractParts(parts);
+
       results.push({
         id: msg.id,
         threadId: msg.threadId,
@@ -59,6 +81,8 @@ export const searchEmails: AgentTool = {
         from,
         date,
         snippet,
+        hasAttachments: attachments.length > 0,
+        attachments: attachments.length > 0 ? attachments : undefined,
         isTranscription: isTranscriptionEmail(subject, from, snippet),
       });
     }
@@ -94,6 +118,26 @@ export const readEmail: AgentTool = {
       value: string;
     }>;
     const body = extractEmailBody(msg.payload as Record<string, unknown>);
+
+    // Extract attachments
+    const attachments: Array<{ filename: string; mimeType: string }> = [];
+    const parts = (msg.payload?.parts || []) as Array<Record<string, unknown>>;
+    const extractParts = (partList: Array<Record<string, unknown>>) => {
+      for (const part of partList) {
+        const filename = part.filename as string | undefined;
+        if (filename && filename.length > 0) {
+          attachments.push({
+            filename,
+            mimeType: (part.mimeType as string) || "unknown",
+          });
+        }
+        if (part.parts) {
+          extractParts(part.parts as Array<Record<string, unknown>>);
+        }
+      }
+    };
+    extractParts(parts);
+
     return {
       id: msg.id,
       subject: getHeader(headers, "Subject"),
@@ -101,6 +145,8 @@ export const readEmail: AgentTool = {
       to: getHeader(headers, "To"),
       date: getHeader(headers, "Date"),
       body: body.slice(0, 8000), // Cap body to stay within context limits
+      hasAttachments: attachments.length > 0,
+      attachments: attachments.length > 0 ? attachments : undefined,
       isTranscription: isTranscriptionEmail(
         getHeader(headers, "Subject"),
         getHeader(headers, "From"),

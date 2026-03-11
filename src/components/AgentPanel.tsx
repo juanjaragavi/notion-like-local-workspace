@@ -62,6 +62,58 @@ export function AgentPanel({ embedded = false }: { embedded?: boolean }) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const sessionIdRef = useRef<string | undefined>(undefined);
+
+  // Keep ref in sync for use in event listeners
+  useEffect(() => {
+    sessionIdRef.current = sessionId;
+    if (sessionId) {
+      try {
+        sessionStorage.setItem("agent-active-session", sessionId);
+      } catch {}
+    }
+  }, [sessionId]);
+
+  // Auto-restore last active session on mount
+  useEffect(() => {
+    const stored = (() => {
+      try {
+        return sessionStorage.getItem("agent-active-session");
+      } catch {
+        return null;
+      }
+    })();
+    if (stored) {
+      (async () => {
+        setLoadingSession(true);
+        try {
+          const res = await fetch(
+            `/api/agent/sessions/${encodeURIComponent(stored)}/messages`,
+          );
+          if (!res.ok) throw new Error("Failed to load session");
+          const data = await res.json();
+          const loaded: ChatMessage[] = (data.messages || []).map(
+            (m: { role: string; content: string; timestamp: string }) => ({
+              role: m.role as "user" | "agent",
+              content: m.content,
+              timestamp: m.timestamp,
+            }),
+          );
+          if (loaded.length > 0) {
+            setMessages(loaded);
+            setSessionId(stored);
+          }
+        } catch {
+          // Session no longer valid — start fresh
+          try {
+            sessionStorage.removeItem("agent-active-session");
+          } catch {}
+        } finally {
+          setLoadingSession(false);
+        }
+      })();
+    }
+  }, []);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -106,6 +158,9 @@ export function AgentPanel({ embedded = false }: { embedded?: boolean }) {
     setSessionId(undefined);
     setStreamingSteps([]);
     setHistoryOpen(false);
+    try {
+      sessionStorage.removeItem("agent-active-session");
+    } catch {}
     inputRef.current?.focus();
   }, []);
 

@@ -7,6 +7,7 @@ export function getDb(): Pool {
   if (!_pool) {
     _pool = new Pool({
       connectionString: process.env.DATABASE_URL,
+      connectionTimeoutMillis: 5000,
       // In production, you might want ssl: true
       ssl:
         process.env.NODE_ENV === "production"
@@ -16,9 +17,13 @@ export function getDb(): Pool {
 
     const originalQuery = _pool.query.bind(_pool);
 
-    _initPromise = initSchema(originalQuery).catch((e) => {
-      console.error("Schema init error:", e);
-    }) as Promise<void>;
+    _initPromise = initSchema(originalQuery)
+      .catch((e) => {
+        console.error("Schema init error:", e);
+      })
+      .finally(() => {
+        _initPromise = null;
+      });
 
     // @ts-expect-error bypassing strict Pool method typings
     _pool.query = async (text: string, values?: unknown[]) => {
@@ -108,6 +113,8 @@ async function initSchema(queryFn: (text: string) => Promise<unknown>) {
       workspace_id TEXT NOT NULL REFERENCES workspaces(id),
       created_at TIMESTAMP NOT NULL DEFAULT NOW()
     );
+
+    ALTER TABLE pages ADD COLUMN IF NOT EXISTS content_markdown TEXT NOT NULL DEFAULT '';
 
     CREATE INDEX IF NOT EXISTS idx_pages_workspace ON pages(workspace_id);
     CREATE INDEX IF NOT EXISTS idx_pages_parent ON pages(parent_id);

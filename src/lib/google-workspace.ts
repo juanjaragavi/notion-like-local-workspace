@@ -111,7 +111,7 @@ const OVERVIEW_CACHE = getNamedCache<DashboardWidgetBundle>(
 );
 const SEARCH_CACHE = getNamedCache<WorkspaceSearchResponse>(
   "workspace-search",
-  5 * 60_000,
+  60_000,
   200,
 );
 const DRIVE_METADATA_CACHE = getNamedCache<DriveMetadataItem[]>(
@@ -574,6 +574,218 @@ function emptyWidgetBundle(auth: WorkspaceAuthState): DashboardWidgetBundle {
   };
 }
 
+/**
+ * Convert a natural language query into Gmail search syntax.
+ * Extracts keywords, detects time references, and adds Gmail-specific operators.
+ */
+function buildGmailQuery(naturalQuery: string): string {
+  const lower = naturalQuery.toLowerCase();
+
+  // If already looks like Gmail syntax, pass through
+  if (
+    /(?:from:|to:|subject:|has:|is:|newer_than:|older_than:|after:|before:|in:)/i.test(
+      naturalQuery,
+    )
+  ) {
+    return naturalQuery;
+  }
+
+  const parts: string[] = [];
+
+  // Detect time references
+  if (
+    /today|this morning|just now|a few minutes|minutes ago|recently|just sent|just received/i.test(
+      lower,
+    )
+  ) {
+    parts.push("newer_than:1d");
+  } else if (/yesterday/i.test(lower)) {
+    parts.push("newer_than:2d");
+  } else if (/this week|past few days|last few days/i.test(lower)) {
+    parts.push("newer_than:7d");
+  }
+
+  // Detect attachment references
+  if (
+    /attach|document|file|pdf|doc|spreadsheet|slide|google doc|shared/i.test(
+      lower,
+    )
+  ) {
+    parts.push("has:attachment");
+  }
+
+  // Detect unread references
+  if (/unread|new email|haven't read/i.test(lower)) {
+    parts.push("is:unread");
+  }
+
+  // Extract meaningful keywords — strip common filler words
+  const stopWords = new Set([
+    "the",
+    "a",
+    "an",
+    "is",
+    "are",
+    "was",
+    "were",
+    "be",
+    "been",
+    "being",
+    "have",
+    "has",
+    "had",
+    "do",
+    "does",
+    "did",
+    "will",
+    "would",
+    "could",
+    "should",
+    "may",
+    "might",
+    "can",
+    "shall",
+    "to",
+    "of",
+    "in",
+    "for",
+    "on",
+    "with",
+    "at",
+    "by",
+    "from",
+    "about",
+    "into",
+    "through",
+    "during",
+    "before",
+    "after",
+    "above",
+    "below",
+    "between",
+    "and",
+    "but",
+    "or",
+    "nor",
+    "not",
+    "so",
+    "yet",
+    "both",
+    "either",
+    "neither",
+    "each",
+    "every",
+    "all",
+    "any",
+    "few",
+    "more",
+    "most",
+    "some",
+    "such",
+    "no",
+    "only",
+    "own",
+    "same",
+    "than",
+    "too",
+    "very",
+    "just",
+    "because",
+    "as",
+    "until",
+    "while",
+    "that",
+    "this",
+    "these",
+    "those",
+    "it",
+    "its",
+    "my",
+    "me",
+    "i",
+    "we",
+    "you",
+    "your",
+    "he",
+    "she",
+    "they",
+    "them",
+    "their",
+    "what",
+    "which",
+    "who",
+    "whom",
+    "how",
+    "when",
+    "where",
+    "why",
+    "find",
+    "search",
+    "show",
+    "get",
+    "look",
+    "check",
+    "give",
+    "sent",
+    "received",
+    "email",
+    "emails",
+    "inbox",
+    "mail",
+    "please",
+    "help",
+    "tell",
+    "want",
+    "need",
+    "recently",
+    "ago",
+    "minutes",
+    "today",
+    "yesterday",
+    "morning",
+    "afternoon",
+    "transcribe",
+    "attached",
+    "attachment",
+    "attachments",
+  ]);
+
+  const keywords = naturalQuery
+    .replace(/[^a-zA-Z0-9\s@.]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 2 && !stopWords.has(w.toLowerCase()));
+
+  if (keywords.length > 0) {
+    // Use at most 5 keywords
+    parts.push(keywords.slice(0, 5).join(" "));
+  }
+
+  return parts.join(" ").trim() || naturalQuery;
+}
+
+/**
+ * Extract attachment info from a Gmail message payload.
+ */
+function extractAttachments(
+  payload: Record<string, unknown>,
+): Array<{ filename: string; mimeType: string }> {
+  const attachments: Array<{ filename: string; mimeType: string }> = [];
+  const parts = payload.parts as Array<Record<string, unknown>> | undefined;
+  if (!parts) return attachments;
+  for (const part of parts) {
+    const filename = part.filename as string | undefined;
+    const mimeType = part.mimeType as string | undefined;
+    if (filename && filename.length > 0) {
+      attachments.push({ filename, mimeType: mimeType || "unknown" });
+    }
+    // Check nested parts (multipart messages)
+    if (part.parts) {
+      attachments.push(...extractAttachments(part as Record<string, unknown>));
+    }
+  }
+  return attachments;
+}
+
 async function searchGmail(
   query: string,
   accessToken: string,
@@ -581,15 +793,36 @@ async function searchGmail(
   maxResults: number,
 ) {
   const gmail = getGmailClient(accessToken, refreshToken);
-  const response = await gmail.users.messages.list({
-    userId: "me",
-    q: query,
-    maxResults,
-  });
+  const gmailQuery = buildGmailQuery(query);
 
-  const messageIds = (response.data.messages || [])
+  // Run the converted query and also fetch recent emails in parallel
+  const [queryResponse, recentResponse] = await Promise.all([
+    gmail.users.messages.list({
+      userId: "me",
+      q: gmailQuery,
+      maxResults,
+    }),
+    gmail.users.messages.list({
+      userId: "me",
+      q: "newer_than:1d",
+      maxResults: Math.min(maxResults, 5),
+    }),
+  ]);
+
+  // Merge and deduplicate message IDs
+  const seen = new Set<string>();
+  const allMessageRefs = [
+    ...(queryResponse.data.messages || []),
+    ...(recentResponse.data.messages || []),
+  ];
+  const messageIds = allMessageRefs
     .map((message) => message.id)
-    .filter((messageId): messageId is string => Boolean(messageId));
+    .filter((messageId): messageId is string => {
+      if (!messageId || seen.has(messageId)) return false;
+      seen.add(messageId);
+      return true;
+    })
+    .slice(0, maxResults);
 
   const messages = await Promise.allSettled(
     messageIds.map((messageId) =>
@@ -615,14 +848,22 @@ async function searchGmail(
       const body = extractEmailBody(
         (message.payload || {}) as Record<string, unknown>,
       );
+      const attachments = extractAttachments(
+        (message.payload || {}) as Record<string, unknown>,
+      );
       const timestamp = message.internalDate
         ? new Date(Number(message.internalDate)).toISOString()
         : new Date().toISOString();
 
+      const attachmentInfo =
+        attachments.length > 0
+          ? ` [Attachments: ${attachments.map((a) => a.filename).join(", ")}]`
+          : "";
+
       return {
         source: "gmail" as const,
         id: message.id || crypto.randomUUID(),
-        title: getHeader(headers, "Subject") || "No subject",
+        title: (getHeader(headers, "Subject") || "No subject") + attachmentInfo,
         snippet: normalizeSnippet(message.snippet || body),
         url: `https://mail.google.com/mail/u/0/#inbox/${message.threadId || message.id}`,
         timestamp,

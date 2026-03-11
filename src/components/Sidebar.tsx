@@ -80,7 +80,7 @@ export function Sidebar({
         ) : (
           <div className="flex items-center justify-center w-full">
             <Image
-              src="/images/2-logo_blanco.png"
+              src="/images/3-favicon.png"
               alt="Logo"
               width={24}
               height={24}

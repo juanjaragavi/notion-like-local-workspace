@@ -1,8 +1,20 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useFetch } from "@/lib/hooks";
 import { FileText, Plus, Trash2, Save } from "lucide-react";
+import dynamic from "next/dynamic";
+import { htmlToMarkdown } from "@/lib/markdown-serializer";
+
+const TiptapEditor = dynamic(
+  () => import("@/components/TiptapEditor").then((m) => m.TiptapEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[55vh] bg-neutral-800 border border-neutral-700 rounded-lg animate-pulse" />
+    ),
+  },
+);
 
 interface PageRow {
   id: string;
@@ -24,6 +36,7 @@ export function PagesPanel() {
   const [selectedPage, setSelectedPage] = useState<PageRow | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
+  const editContentRef = useRef("");
   const [saving, setSaving] = useState(false);
 
   const createPage = async () => {
@@ -44,6 +57,7 @@ export function PagesPanel() {
     });
     setEditTitle(page.title);
     setEditContent("");
+    editContentRef.current = "";
   };
 
   const selectPage = useCallback(async (page: PageRow) => {
@@ -52,18 +66,22 @@ export function PagesPanel() {
     setSelectedPage(full);
     setEditTitle(full.title);
     setEditContent(full.content);
+    editContentRef.current = full.content;
   }, []);
 
   const savePage = async () => {
     if (!selectedPage) return;
     setSaving(true);
+    const htmlContent = editContentRef.current;
+    const contentMarkdown = htmlToMarkdown(htmlContent);
     await fetch("/api/pages", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         id: selectedPage.id,
         title: editTitle,
-        content: editContent,
+        content: htmlContent,
+        contentMarkdown,
       }),
     });
     setSaving(false);
@@ -102,11 +120,11 @@ export function PagesPanel() {
             placeholder="Page title..."
           />
         </div>
-        <textarea
-          value={editContent}
-          onChange={(e) => setEditContent(e.target.value)}
-          className="w-full min-h-[60vh] bg-neutral-800 border border-neutral-700 rounded-lg p-4 text-sm text-neutral-300 placeholder-neutral-600 outline-none resize-none focus:border-blue-500"
-          placeholder="Start writing..."
+        <TiptapEditor
+          content={editContent}
+          onUpdate={(html) => {
+            editContentRef.current = html;
+          }}
         />
         <div className="flex justify-end mt-3">
           <button

@@ -165,6 +165,10 @@ CORE CAPABILITIES:
 
 4. Email & Calendar:
    - Search, read, compose via Gmail API. Identify transcription emails.
+   - When searching for recent emails, use Gmail search operators: newer_than:1d (today), newer_than:2d (yesterday), newer_than:7d (this week).
+   - To find emails with attachments, use has:attachment. Combine with other operators: "newer_than:1d has:attachment".
+   - To find Google Docs shared via email, search for: "newer_than:1d has:attachment" or "newer_than:1d docs.google.com".
+   - Always use time-scoped searches when the user references recent emails (e.g. "today", "just now", "a few minutes ago" → newer_than:1d).
    - View events, check availability, manage scheduling via Google Calendar API.
 
 5. Task & Transcription Management:
