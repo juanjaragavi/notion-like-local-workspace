@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { signIn } from "next-auth/react";
 import { AlertCircle, CalendarClock, Mail, RefreshCcw } from "lucide-react";
 
 import type {
@@ -245,8 +246,32 @@ function AuthOrErrorState({
   error?: WorkspaceDataError;
   children: ReactNode;
 }) {
-  if (authMessage) {
-    return <ErrorState message={authMessage} />;
+  const needsReauth =
+    authMessage ||
+    error?.message.includes("invalid_rapt") ||
+    error?.message.includes("invalid_grant");
+
+  if (needsReauth) {
+    return (
+      <div className="flex flex-col items-start gap-4">
+        <ErrorState
+          message={error?.message || authMessage || "Session expired."}
+          kind="auth"
+        />
+        <button
+          onClick={() =>
+            signIn("google", {
+              callbackUrl: "/dashboard",
+              prompt: "consent",
+              access_type: "offline",
+            })
+          }
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
+        >
+          Reconnect Google Workspace
+        </button>
+      </div>
+    );
   }
 
   if (error) {

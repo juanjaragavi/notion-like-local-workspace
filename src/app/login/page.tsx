@@ -2,6 +2,7 @@
 
 import { Mail, Chrome, Apple } from "lucide-react";
 import { useState } from "react";
+import Image from "next/image";
 import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
@@ -30,9 +31,17 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4">
-            <span className="text-3xl">📋</span>
+            <Image
+              src="/images/2-logo_blanco.png"
+              alt="Logo"
+              width={32}
+              height={32}
+              className="object-contain"
+            />
           </div>
-          <h1 className="text-2xl font-bold text-white">Workspace</h1>
+          <h1 className="text-2xl font-bold text-white">
+            Juan&apos;s Workspace
+          </h1>
           <p className="text-neutral-400 text-sm mt-1">
             Your personal productivity workspace
           </p>

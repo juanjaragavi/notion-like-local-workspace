@@ -61,7 +61,7 @@ export function DashboardShell({
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-[11px] uppercase tracking-[0.24em] text-neutral-500">
-                Notion Workspace
+                Juan&apos;s Workspace
               </p>
               <h1 className="mt-1 text-2xl font-semibold text-white">
                 {copy.title}
@@ -78,7 +78,9 @@ export function DashboardShell({
             </div>
           </div>
         </header>
-        <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto transform-gpu will-change-transform">
+          {children}
+        </div>
       </main>
     </div>
   );

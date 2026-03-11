@@ -86,11 +86,15 @@ export class AgentOrchestrator {
     while (rounds < MAX_TOOL_ROUNDS) {
       rounds++;
 
+      const dynamicSystemPrompt = ctx.longTermMemory
+        ? `${this.systemPrompt}\n\nProject Status & Context (Semantic Memory):\n${ctx.longTermMemory}`
+        : this.systemPrompt;
+
       const response = await client.models.generateContent({
         model: AGENT_MODEL,
         contents,
         config: {
-          systemInstruction: this.systemPrompt,
+          systemInstruction: dynamicSystemPrompt,
           tools: [{ functionDeclarations }],
           temperature: 0.7,
         },

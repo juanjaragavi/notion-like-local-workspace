@@ -7,6 +7,12 @@ import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { getOrchestrator } from "@/lib/agents";
 import {
+  getSessionHistory,
+  saveMessage,
+  extractAndStoreMemory,
+  getSemanticContext,
+} from "@/lib/agents/memory";
+import {
   primeDriveMetadataCache,
   searchGoogleWorkspace,
 } from "@/lib/google-workspace";
@@ -68,9 +74,26 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const history: AgentMessage[] = Array.isArray(body.history)
+  let history: AgentMessage[] = Array.isArray(body.history)
     ? body.history.slice(-20)
     : [];
+
+  if (body.sessionId && history.length <= 1) {
+    const dbHistory = await getSessionHistory(body.sessionId);
+    if (dbHistory && dbHistory.length > 0) {
+      history = dbHistory.map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.timestamp,
+      }));
+    }
+  }
+
+  // Save the user message to memory
+  if (body.sessionId) {
+    await saveMessage(body.sessionId, "user", message.trim());
+    await extractAndStoreMemory(ws.id, message.trim());
+  }
 
   void primeDriveMetadataCache({
     userKey: userId,
@@ -87,6 +110,8 @@ export async function POST(req: NextRequest) {
     maxResults: 8,
   });
 
+  const longTermMemory = await getSemanticContext(ws.id);
+
   const ctx: AgentContext = {
     userId,
     workspaceId: ws.id,
@@ -94,6 +119,7 @@ export async function POST(req: NextRequest) {
     refreshToken,
     sessionId: body.sessionId,
     workspaceSearch,
+    longTermMemory,
   };
 
   const orchestrator = getOrchestrator();
@@ -115,6 +141,20 @@ export async function POST(req: NextRequest) {
       buildSearchContextKey(userId, result.sessionId || body.sessionId),
       workspaceSearch,
     );
+
+    // Save the agent message to memory
+    if (result.sessionId || body.sessionId) {
+      const activeSession = result.sessionId || body.sessionId;
+      if (activeSession) {
+        if (!body.sessionId) {
+          // If we didn't save the user message earlier because we didn't have the session ID:
+          await saveMessage(activeSession, "user", message.trim());
+          await extractAndStoreMemory(ws.id, message.trim());
+        }
+        await saveMessage(activeSession, "agent", result.message);
+        await extractAndStoreMemory(ws.id, result.message);
+      }
+    }
 
     return NextResponse.json({
       message: result.message,

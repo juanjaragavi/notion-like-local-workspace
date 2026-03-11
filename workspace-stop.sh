@@ -162,8 +162,15 @@ else
   log_ok "Docker not available — skipping MCP cleanup"
 fi
 
-# ── Phase 2: Orphan Cleanup ───────────────────────────────────────────────
-log_phase "ORPHAN PROCESS CLEANUP"
+# ── Phase 2: Orphan Cleanup & App State ────────────────────────────────
+log_phase "ORPHAN PROCESS CLEANUP & APP STATE"
+
+# Kill macOS app launcher so the Dock icon disappears
+if pgrep -f "Contents/MacOS/launcher" > /dev/null 2>&1; then
+  log_step "Killing macOS App launcher..."
+  pkill -9 -f "Contents/MacOS/launcher" 2>/dev/null || true
+  log_ok "macOS App launcher closed"
+fi
 
 # Kill anything still listening on our ports
 for port in $NEXT_PORT $PROXY_PORT $MCP_PORT; do

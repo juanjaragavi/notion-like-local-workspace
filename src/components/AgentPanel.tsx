@@ -11,6 +11,8 @@ import {
   Maximize2,
   Minimize2,
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import { GlobalWorkspaceSearch } from "@/components/GlobalWorkspaceSearch";
 
@@ -222,8 +224,14 @@ export function AgentPanel({ embedded = false }: { embedded?: boolean }) {
                   : "bg-neutral-800 text-neutral-200"
               }`}
             >
-              <div className="whitespace-pre-wrap wrap-break-words">
-                {msg.content}
+              <div className="whitespace-pre-wrap wrap-break-words prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-neutral-900">
+                {msg.role === "agent" ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {msg.content}
+                  </ReactMarkdown>
+                ) : (
+                  msg.content
+                )}
               </div>
               {msg.toolCalls && msg.toolCalls.length > 0 && (
                 <div className="mt-2 pt-2 border-t border-neutral-700/50">

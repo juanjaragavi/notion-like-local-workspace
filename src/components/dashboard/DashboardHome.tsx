@@ -196,8 +196,8 @@ export async function DashboardHome({
       {/* Live Google Workspace widgets (Gmail + Calendar KPI + previews) */}
       <DashboardWidgets initialData={initialData} />
 
-      {/* Module preview widgets — masonry grid */}
-      <div className="columns-1 gap-4 md:columns-2 lg:columns-3 *:mb-4 *:break-inside-avoid">
+      {/* Module preview widgets — grid */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {/* Pages widget */}
         <a
           href="/dashboard?tab=pages"

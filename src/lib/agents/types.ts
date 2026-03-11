@@ -27,6 +27,7 @@ export interface AgentContext {
   refreshToken?: string;
   sessionId?: string;
   workspaceSearch?: WorkspaceSearchResponse;
+  longTermMemory?: string;
 }
 
 /** A tool that the agent can invoke */

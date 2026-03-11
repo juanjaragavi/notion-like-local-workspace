@@ -7,7 +7,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-APP_NAME="Notion Workspace"
+APP_NAME="Juan's Workspace"
 INSTALL_DIR="/tmp"
 APP_PATH="$INSTALL_DIR/$APP_NAME.app"
 SESSION_DIR="$HOME/.notion-workspace"

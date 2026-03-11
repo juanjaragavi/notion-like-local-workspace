@@ -1,4 +1,5 @@
 import Cocoa
+import UserNotifications
 
 // ============================================================================
 // Notion Workspace — Native macOS Launcher
@@ -12,16 +13,28 @@ import Cocoa
 //   • Quit (⌘Q / Dock → Quit) → graceful shutdown of all services
 // ============================================================================
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     private let port = 3000
 
     // MARK: – Lifecycle
 
     func applicationDidFinishLaunching(_: Notification) {
+        let center = UNUserNotificationCenter.current()
+        center.delegate = self
+        center.requestAuthorization(options: [.alert, .sound]) { _, _ in }
+
         if isPortListening(port) {
             openBrowser()
         } else {
             startServices()
+        }
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        if #available(macOS 11.0, *) {
+            completionHandler([.banner, .sound])
+        } else {
+            completionHandler([.alert, .sound])
         }
     }
 
@@ -172,9 +185,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func notify(_ msg: String, error: Bool = false) {
-        let snd = error ? " sound name \"Basso\"" : ""
-        run("/usr/bin/osascript", ["-e",
-            "display notification \"\(msg)\" with title \"Notion Workspace\"\(snd)"])
+        let content = UNMutableNotificationContent()
+        content.title = "Juan's Workspace"
+        content.body = msg
+        if error {
+            content.sound = UNNotificationSound(named: UNNotificationSoundName("Basso"))
+        }
+
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request) { _ in }
     }
 
     @discardableResult
