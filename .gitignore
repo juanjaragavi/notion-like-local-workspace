@@ -50,3 +50,6 @@ dist/
 # Notebooks
 
 lib/documents/document.md
+
+# macos build artifacts
+macos/*.app/
