@@ -29,14 +29,16 @@ export function GlobalWorkspaceSearch({
   const [results, setResults] = useState<WorkspaceSearchResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [engine, setEngine] = useState<RerankEngine>("scalar");
+  const engineRef = useRef<RerankEngine>("scalar");
   const [cached, setCached] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const requestIdRef = useRef(0);
 
   useEffect(() => {
-    void detectRerankEngine().then(setEngine);
+    void detectRerankEngine().then((e) => {
+      engineRef.current = e;
+    });
   }, []);
 
   useEffect(() => {
@@ -103,7 +105,7 @@ export function GlobalWorkspaceSearch({
           requestIdRef.current += 1;
           workerRef.current.postMessage({
             requestId: requestIdRef.current,
-            engine,
+            engine: engineRef.current,
             query: normalizedQuery,
             results: data.results,
           });
@@ -128,7 +130,7 @@ export function GlobalWorkspaceSearch({
       controller.abort();
       window.clearTimeout(timeoutId);
     };
-  }, [deferredQuery, engine]);
+  }, [deferredQuery]);
 
   const compact = contextSource === "agent";
 
@@ -149,7 +151,7 @@ export function GlobalWorkspaceSearch({
           className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-neutral-500"
         />
         <span className="rounded-full border border-neutral-800 px-2 py-1 text-[10px] uppercase tracking-[0.22em] text-neutral-400">
-          {engine}
+          WebGPU
         </span>
         {loading ? (
           <Loader2 size={16} className="animate-spin text-neutral-500" />
@@ -171,7 +173,7 @@ export function GlobalWorkspaceSearch({
                 : "No matching Gmail threads, calendar events, or Drive files."}
             </div>
           ) : (
-            <div className="max-h-[24rem] overflow-y-auto py-2">
+            <div className="max-h-96 overflow-y-auto py-2">
               {results.map((result) => (
                 <a
                   key={`${result.source}:${result.id}`}

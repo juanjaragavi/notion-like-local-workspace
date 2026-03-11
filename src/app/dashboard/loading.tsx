@@ -1,19 +1,9 @@
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 
-const PLACEHOLDER_LINKS = [
-  "xl:col-span-2",
-  "xl:col-span-2",
-  "xl:col-span-2",
-  "xl:col-span-2",
-  "xl:col-span-2",
-  "xl:col-span-2",
-  "xl:col-span-2",
-];
-
 function DashboardCardSkeleton({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`overflow-hidden rounded-3xl border border-neutral-800 bg-neutral-900/70 p-5 ${className}`}
+      className={`overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/70 p-5 ${className}`}
     >
       <div className="animate-pulse space-y-4">
         <div className="flex items-center gap-3">
@@ -36,20 +26,24 @@ function DashboardCardSkeleton({ className = "" }: { className?: string }) {
 export default function Loading() {
   return (
     <DashboardShell user={{}}>
-      <div className="mx-auto w-full max-w-7xl px-6 py-8">
-        <div className="grid auto-rows-[minmax(132px,auto)] grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
-          <DashboardCardSkeleton className="md:col-span-2 xl:col-span-4 xl:row-span-2" />
-          <DashboardCardSkeleton className="md:col-span-2 xl:col-span-2 xl:row-span-2" />
-          <DashboardCardSkeleton className="xl:col-span-2 xl:row-span-2" />
-          <DashboardCardSkeleton className="md:min-h-75 xl:col-span-2 xl:row-span-3" />
-          <DashboardCardSkeleton className="md:col-span-2 xl:col-span-3 xl:row-span-4" />
-          <DashboardCardSkeleton className="md:col-span-2 xl:col-span-3 xl:row-span-4" />
-          {PLACEHOLDER_LINKS.map((span, index) => (
-            <DashboardCardSkeleton
-              key={index}
-              className={`md:min-h-38 ${span}`}
-            />
-          ))}
+      <div className="mx-auto w-full max-w-7xl px-6 py-5 space-y-5">
+        {/* KPI row skeleton */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <DashboardCardSkeleton className="min-h-35" />
+          <DashboardCardSkeleton className="min-h-35" />
+        </div>
+        {/* Live feed row skeleton */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <DashboardCardSkeleton className="min-h-60" />
+          <DashboardCardSkeleton className="min-h-60" />
+        </div>
+        {/* Masonry module widgets skeleton */}
+        <div className="columns-1 gap-4 md:columns-2 lg:columns-3 *:mb-4 *:break-inside-avoid">
+          <DashboardCardSkeleton className="min-h-44" />
+          <DashboardCardSkeleton className="min-h-56" />
+          <DashboardCardSkeleton className="min-h-36" />
+          <DashboardCardSkeleton className="min-h-44" />
+          <DashboardCardSkeleton className="min-h-36" />
         </div>
       </div>
     </DashboardShell>

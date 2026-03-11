@@ -54,22 +54,23 @@ export function DashboardWidgets({
   const [polling, setPolling] = useState(false);
 
   const refreshOverview = useCallback(async () => {
+    if (polling) return;
     setPolling(true);
     try {
       const response = await fetch("/api/dashboard/widgets?widget=overview", {
         cache: "no-store",
       });
-      const data = (await response.json()) as DashboardWidgetBundle;
       if (!response.ok) {
         throw new Error("Unable to refresh dashboard widgets.");
       }
+      const data = (await response.json()) as DashboardWidgetBundle;
       startTransition(() => setOverview(data));
     } catch {
       // Leave previous data in place.
     } finally {
       setPolling(false);
     }
-  }, []);
+  }, [polling]);
 
   useEffect(() => {
     const timer = window.setInterval(refreshOverview, 60_000);

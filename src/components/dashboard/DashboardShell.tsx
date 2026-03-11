@@ -78,9 +78,7 @@ export function DashboardShell({
             </div>
           </div>
         </header>
-        <div className="min-h-0 flex-1 overflow-y-auto will-change-transform">
-          {children}
-        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
       </main>
     </div>
   );

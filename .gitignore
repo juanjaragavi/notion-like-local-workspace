@@ -46,3 +46,7 @@ next-env.d.ts
 # lifecycle scripts
 dist/
 /tmp/notion-workspace-*
+
+# Notebooks
+
+lib/documents/document.md

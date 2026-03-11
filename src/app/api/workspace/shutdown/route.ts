@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { exec } from "child_process";
 import path from "path";
+import { processRegistry } from "@/lib/process-registry";
 
 export async function POST() {
   // Safety: only allow shutdown in development
@@ -17,10 +18,15 @@ export async function POST() {
   const response = NextResponse.json({
     status: "shutting_down",
     message: "Workspace is shutting down. This page will become unreachable.",
+    terminatedProcesses: processRegistry.list(),
   });
 
-  // Fire-and-forget: run stop script after a brief delay so the response flushes
-  setTimeout(() => {
+  // Fire-and-forget: tear down registered child processes, then run stop script
+  setTimeout(async () => {
+    // Phase 1 — terminate all registered child processes
+    await processRegistry.teardown();
+
+    // Phase 2 — run the OS-level stop script for remaining services
     exec(`bash "${scriptPath}"`, (error, stdout, stderr) => {
       if (error) {
         console.error("[shutdown] Error:", error.message);
@@ -31,4 +37,12 @@ export async function POST() {
   }, 500);
 
   return response;
+}
+
+/** GET /api/workspace/shutdown — returns currently registered child processes */
+export async function GET() {
+  return NextResponse.json({
+    registeredProcesses: processRegistry.list(),
+    count: processRegistry.size,
+  });
 }
