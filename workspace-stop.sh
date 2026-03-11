@@ -108,14 +108,39 @@ kill_from_pid_file() {
   fi
 }
 
+SESSION_DIR="$HOME/.notion-workspace"
+SESSION_STATE_FILE="$SESSION_DIR/session-state.json"
+
 # ── Main ────────────────────────────────────────────────────────────────────
-clear
+
+# Support headless mode when stdout is not a terminal
+if [ -t 1 ]; then
+  clear
+fi
+
 echo ""
 echo -e "${BOLD}${RED}"
 echo "   ╭──────────────────────────────────────╮"
 echo "   │       Notion Workspace Shutdown       │"
 echo "   ╰──────────────────────────────────────╯"
 echo -e "${RESET}"
+
+# ── Phase 0: Session State Persistence ─────────────────────────────────
+log_phase "SESSION STATE PERSISTENCE"
+
+if lsof -iTCP:"$NEXT_PORT" -sTCP:LISTEN -t >/dev/null 2>&1; then
+  log_step "Flushing session state via shutdown API..."
+  if curl -sf -X POST "http://localhost:$NEXT_PORT/api/workspace/shutdown" \
+       -H "Content-Type: application/json" \
+       --max-time 5 > /dev/null 2>&1; then
+    log_ok "Session state persisted"
+    sleep 1
+  else
+    log_warn "Shutdown API unreachable — session state may not be flushed"
+  fi
+else
+  log_ok "Next.js not running — no session state to flush"
+fi
 
 # ── Phase 1: Service Termination ───────────────────────────────────────────
 log_phase "SERVICE TERMINATION"
@@ -172,12 +197,12 @@ else
   log_ok "No log directory to clean"
 fi
 
-# .next build cache
-if [ -d "$SCRIPT_DIR/.next" ]; then
+# Preserve .next build cache for faster restarts (only delete with --clean flag)
+if [[ "${1:-}" == "--clean" ]] && [ -d "$SCRIPT_DIR/.next" ]; then
   rm -rf "$SCRIPT_DIR/.next"
-  log_ok "Removed .next build cache"
+  log_ok "Removed .next build cache (--clean)"
 else
-  log_ok "No .next cache present"
+  log_ok ".next build cache preserved for fast restart"
 fi
 
 # Next.js dev log
@@ -186,14 +211,22 @@ if [ -f "$SCRIPT_DIR/.next_dev.log" ]; then
   log_ok "Removed .next_dev.log"
 fi
 
-# Home dir temp files
+# Home dir temp files (preserve session-state.json and project-root)
 WORKSPACE_TMP="$HOME/.notion-workspace"
 if [ -d "$WORKSPACE_TMP" ]; then
   find "$WORKSPACE_TMP" -name "*.tmp" -delete 2>/dev/null && \
     log_ok "Purged temp files in ~/.notion-workspace" || \
     log_ok "No temp files in ~/.notion-workspace"
+  log_ok "Session state files preserved in ~/.notion-workspace"
 else
   log_ok "No ~/.notion-workspace directory"
+fi
+
+# Daemon PID file
+DAEMON_PID_FILE="/tmp/notion-workspace-daemon.pid"
+if [ -f "$DAEMON_PID_FILE" ]; then
+  rm -f "$DAEMON_PID_FILE"
+  log_ok "Removed daemon PID file"
 fi
 
 # ── Done ───────────────────────────────────────────────────────────────────

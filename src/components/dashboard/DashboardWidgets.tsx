@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { type ReactNode } from "react";
 import {
   startTransition,
   useCallback,
@@ -298,7 +298,10 @@ function GmailRow({ item }: { item: GmailPreviewItem }) {
           <p className="truncate text-sm font-medium text-white">
             {item.sender}
           </p>
-          <span className="shrink-0 text-[11px] text-neutral-500">
+          <span
+            className="shrink-0 text-[11px] text-neutral-500"
+            suppressHydrationWarning
+          >
             {relativeTime(item.timestamp)}
           </span>
         </div>
@@ -327,7 +330,10 @@ function CalendarRow({ item }: { item: CalendarPreviewItem }) {
           <p className="truncate text-sm font-medium text-white">
             {item.title}
           </p>
-          <span className="shrink-0 text-[11px] text-neutral-500">
+          <span
+            className="shrink-0 text-[11px] text-neutral-500"
+            suppressHydrationWarning
+          >
             {relativeTime(item.start)}
           </span>
         </div>
@@ -456,7 +462,11 @@ function PreviewWidget<T extends { id: string }>({
         ) : (
           <div ref={scrollRef} className="max-h-80 overflow-y-auto pr-1">
             <div className="space-y-2">
-              {collection.items.map((item) => renderItem(item))}
+              {collection.items.map((item, index) => (
+                <li key={`${item.id}-${index}`} className="list-none">
+                  {renderItem(item)}
+                </li>
+              ))}
             </div>
             {loadingMore ? (
               <div className="mt-2 space-y-2">

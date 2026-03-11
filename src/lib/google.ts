@@ -1,3 +1,4 @@
+import type { GaxiosOptions } from "gaxios";
 import { google } from "googleapis";
 
 import { getDb } from "@/lib/db";
@@ -36,9 +37,9 @@ export function getAuthedClient(accessToken: string, refreshToken?: string) {
 
   if (refreshToken) {
     const originalRequest = client.request.bind(client);
-    client.request = async <T>(opts: T) => {
+    client.request = async <T>(opts: GaxiosOptions) => {
       try {
-        return await originalRequest(opts);
+        return await originalRequest<T>(opts);
       } catch (error) {
         if (!shouldRefreshToken(error)) {
           throw error;
@@ -50,7 +51,7 @@ export function getAuthedClient(accessToken: string, refreshToken?: string) {
           refresh_token: refreshToken,
           expiry_date: refreshedToken.expiresAt,
         });
-        return originalRequest(opts);
+        return originalRequest<T>(opts);
       }
     };
   }
