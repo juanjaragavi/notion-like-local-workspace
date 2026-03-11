@@ -1,0 +1,424 @@
+import { getGeminiClient, AGENT_MODEL } from "./gemini";
+import { allTools, buildToolRegistry, getToolsByNames } from "./tools";
+import { subAgentConfigs } from "./sub-agents";
+import { buildOrchestratorPrompt } from "./system-prompt";
+import { getSkillRegistry } from "./skill-registry";
+import { getDb } from "@/lib/db";
+import { v4 as uuidv4 } from "uuid";
+import type {
+  AgentContext,
+  AgentMessage,
+  AgentResponse,
+  AgentTool,
+  AgentTaskRecord,
+  ToolCallResult,
+  ToolRegistry,
+  SubAgentRole,
+  DecomposedTask,
+} from "./types";
+import type { Content, FunctionDeclaration, Part } from "@google/genai";
+
+const MAX_TOOL_ROUNDS = 8;
+
+/**
+ * Main agent orchestrator that handles multi-turn conversations with
+ * function calling via Gemini API. Supports task decomposition, session
+ * tracking, sub-agent delegation, and skill execution.
+ */
+export class AgentOrchestrator {
+  private toolRegistry: ToolRegistry;
+  private tools: AgentTool[];
+  private systemPrompt: string;
+
+  constructor(tools?: AgentTool[], systemPrompt?: string) {
+    this.tools = tools || allTools;
+    this.toolRegistry = buildToolRegistry(this.tools);
+    this.systemPrompt = systemPrompt || buildOrchestratorPrompt();
+  }
+
+  /**
+   * Process a user message with optional conversation history.
+   * Handles the full function-calling loop: send → tool calls → execute → respond.
+   * Tracks sessions and tasks in the database.
+   */
+  async processMessage(
+    userMessage: string,
+    ctx: AgentContext,
+    history: AgentMessage[] = [],
+  ): Promise<AgentResponse> {
+    // Create or reuse session
+    const sessionId = ctx.sessionId || (await this.createSession(ctx));
+    const tasks: AgentTaskRecord[] = [];
+
+    // Seed skills on first use (idempotent)
+    try {
+      await getSkillRegistry().seedDefaults();
+    } catch {
+      // Non-critical — skills may already exist
+    }
+
+    // Add skill discovery tool dynamically
+    const skillTool = getSkillRegistry().buildSkillDiscoveryTool();
+    const allToolsWithSkills: AgentTool[] = [
+      ...this.tools,
+      skillTool as unknown as AgentTool,
+    ];
+    const registry = buildToolRegistry(allToolsWithSkills);
+
+    const client = getGeminiClient();
+    const functionDeclarations: FunctionDeclaration[] = allToolsWithSkills.map(
+      (t) => t.declaration,
+    );
+
+    // Build conversation contents from history
+    const contents: Content[] = this.buildContents(history, userMessage);
+    const allToolCalls: ToolCallResult[] = [];
+
+    // Record the main task
+    const mainTaskId = await this.recordTask(sessionId, {
+      agentRole: "orchestrator" as SubAgentRole,
+      description: userMessage,
+      input: { message: userMessage },
+    });
+
+    let rounds = 0;
+
+    while (rounds < MAX_TOOL_ROUNDS) {
+      rounds++;
+
+      const response = await client.models.generateContent({
+        model: AGENT_MODEL,
+        contents,
+        config: {
+          systemInstruction: this.systemPrompt,
+          tools: [{ functionDeclarations }],
+          temperature: 0.7,
+        },
+      });
+
+      const candidate = response.candidates?.[0];
+      if (!candidate?.content?.parts) {
+        await this.completeTask(
+          mainTaskId,
+          { error: "No response generated" },
+          "failed",
+        );
+        return {
+          message: "I wasn't able to generate a response. Please try again.",
+          toolCalls: allToolCalls,
+          sessionId,
+          tasks,
+        };
+      }
+
+      const parts = candidate.content.parts;
+
+      // Check for function calls
+      const functionCalls = parts.filter((p) => p.functionCall);
+      if (functionCalls.length === 0) {
+        // No more tool calls — extract final text
+        const text = parts
+          .filter((p) => p.text)
+          .map((p) => p.text)
+          .join("");
+        await this.completeTask(mainTaskId, { message: text }, "completed");
+        return {
+          message: text || "Done.",
+          toolCalls: allToolCalls,
+          sessionId,
+          tasks,
+        };
+      }
+
+      // Append model response to contents (preserving thought signatures)
+      contents.push({ role: "model", parts: candidate.content.parts });
+
+      // Execute all function calls (parallel)
+      const functionResponseParts: Part[] = await Promise.all(
+        functionCalls.map(async (part) => {
+          const fc = part.functionCall!;
+          const toolName = fc.name!;
+          const toolArgs = (fc.args || {}) as Record<string, unknown>;
+          const tool = registry.get(toolName);
+
+          // Record sub-task
+          const taskId = await this.recordTask(sessionId, {
+            agentRole: this.inferAgentRole(toolName),
+            description: `Tool call: ${toolName}`,
+            input: toolArgs,
+            parentTaskId: mainTaskId,
+          });
+
+          let result: unknown;
+          if (!tool) {
+            result = { error: `Unknown tool: ${toolName}` };
+            await this.completeTask(
+              taskId,
+              result as Record<string, unknown>,
+              "failed",
+            );
+          } else {
+            try {
+              result = await tool.handler(toolArgs, ctx);
+              await this.completeTask(
+                taskId,
+                typeof result === "object"
+                  ? (result as Record<string, unknown>)
+                  : { value: result },
+                "completed",
+              );
+            } catch (err) {
+              result = {
+                error:
+                  err instanceof Error ? err.message : "Tool execution failed",
+              };
+              await this.completeTask(
+                taskId,
+                result as Record<string, unknown>,
+                "failed",
+              );
+            }
+          }
+
+          allToolCalls.push({ name: toolName, args: toolArgs, result });
+
+          return {
+            functionResponse: {
+              name: toolName,
+              response: { result },
+            },
+          } as Part;
+        }),
+      );
+
+      // Append function responses as user turn
+      contents.push({ role: "user", parts: functionResponseParts });
+    }
+
+    await this.completeTask(
+      mainTaskId,
+      { message: "Max tool rounds reached" },
+      "completed",
+    );
+    return {
+      message:
+        "I reached the maximum number of tool calls for this request. Here's what I found so far.",
+      toolCalls: allToolCalls,
+      sessionId,
+      tasks,
+    };
+  }
+
+  /**
+   * Run a specialized sub-agent for a specific domain.
+   */
+  async runSubAgent(
+    role: string,
+    userMessage: string,
+    ctx: AgentContext,
+    history: AgentMessage[] = [],
+  ): Promise<AgentResponse> {
+    const config = subAgentConfigs.find((c) => c.role === role);
+    if (!config) {
+      return { message: `Unknown sub-agent role: ${role}`, toolCalls: [] };
+    }
+
+    const subTools = getToolsByNames(config.toolNames);
+    const subOrchestrator = new AgentOrchestrator(
+      subTools,
+      config.systemPrompt,
+    );
+    return subOrchestrator.processMessage(userMessage, ctx, history);
+  }
+
+  /**
+   * Decompose a complex request into sub-tasks and execute them.
+   * Used when the orchestrator detects a multi-step workflow.
+   */
+  async executeDecomposed(
+    tasks: DecomposedTask[],
+    ctx: AgentContext,
+  ): Promise<AgentResponse> {
+    const allToolCalls: ToolCallResult[] = [];
+    const results: Array<{ task: string; result: string }> = [];
+
+    // Group tasks by dependency level
+    const executed = new Set<string>();
+    const remaining = [...tasks];
+
+    while (remaining.length > 0) {
+      // Find tasks whose dependencies are all met
+      const ready = remaining.filter((t) =>
+        t.dependsOn.every((dep) => executed.has(dep)),
+      );
+      if (ready.length === 0) {
+        results.push({
+          task: "dependency-resolution",
+          result: "Could not resolve remaining task dependencies",
+        });
+        break;
+      }
+
+      // Execute ready tasks (in parallel if independent)
+      const batchResults = await Promise.all(
+        ready.map(async (task) => {
+          const response = await this.runSubAgent(
+            task.agentRole,
+            task.description,
+            ctx,
+          );
+          allToolCalls.push(...response.toolCalls);
+          executed.add(task.id);
+          // Remove from remaining
+          const idx = remaining.findIndex((t) => t.id === task.id);
+          if (idx >= 0) remaining.splice(idx, 1);
+          return { task: task.description, result: response.message };
+        }),
+      );
+      results.push(...batchResults);
+    }
+
+    const summary = results
+      .map((r, i) => `${i + 1}. ${r.task}\n   → ${r.result}`)
+      .join("\n\n");
+
+    return {
+      message: `Completed ${results.length} task(s):\n\n${summary}`,
+      toolCalls: allToolCalls,
+    };
+  }
+
+  // ── Session & Task Tracking ──
+
+  private async createSession(ctx: AgentContext): Promise<string> {
+    const db = getDb();
+    const id = uuidv4();
+    try {
+      await db.query(
+        `INSERT INTO agent_sessions (id, workspace_id, user_id, status, context)
+         VALUES ($1, $2, $3, 'active', $4)`,
+        [
+          id,
+          ctx.workspaceId,
+          ctx.userId,
+          JSON.stringify({ accessToken: "***", workspaceId: ctx.workspaceId }),
+        ],
+      );
+    } catch {
+      // Non-critical — session tracking is best-effort
+    }
+    return id;
+  }
+
+  private async recordTask(
+    sessionId: string,
+    task: {
+      agentRole: SubAgentRole | string;
+      description: string;
+      input: Record<string, unknown>;
+      parentTaskId?: string;
+    },
+  ): Promise<string> {
+    const db = getDb();
+    const id = uuidv4();
+    try {
+      await db.query(
+        `INSERT INTO agent_tasks (id, session_id, parent_task_id, agent_role, description, status, input)
+         VALUES ($1, $2, $3, $4, $5, 'running', $6)`,
+        [
+          id,
+          sessionId,
+          task.parentTaskId || null,
+          task.agentRole,
+          task.description,
+          JSON.stringify(task.input),
+        ],
+      );
+    } catch {
+      // Non-critical
+    }
+    return id;
+  }
+
+  private async completeTask(
+    taskId: string,
+    output: Record<string, unknown>,
+    status: "completed" | "failed",
+  ): Promise<void> {
+    const db = getDb();
+    try {
+      await db.query(
+        `UPDATE agent_tasks SET status = $1, output = $2, completed_at = NOW()
+         WHERE id = $3`,
+        [status, JSON.stringify(output), taskId],
+      );
+    } catch {
+      // Non-critical
+    }
+  }
+
+  /**
+   * Infer which sub-agent role a tool belongs to.
+   */
+  private inferAgentRole(toolName: string): SubAgentRole {
+    const roleMap: Record<string, SubAgentRole> = {
+      search_emails: "email-analyst",
+      read_email: "email-analyst",
+      get_upcoming_events: "calendar-planner",
+      get_today_schedule: "calendar-planner",
+      list_action_items: "task-manager",
+      create_action_item: "task-manager",
+      update_action_item: "task-manager",
+      list_pages: "document-writer",
+      read_page: "document-writer",
+      create_page: "document-writer",
+      update_page: "document-writer",
+      list_transcriptions: "transcription-processor",
+      process_transcription_email: "transcription-processor",
+      read_transcription: "transcription-processor",
+      list_directory: "file-operations",
+      read_local_file: "file-operations",
+      write_local_file: "file-operations",
+      create_directory: "file-operations",
+      move_file: "file-operations",
+      delete_file: "file-operations",
+      execute_shell_command: "system-control",
+      run_applescript: "system-control",
+      get_system_info: "system-control",
+      open_application: "system-control",
+    };
+    return roleMap[toolName] || "document-writer";
+  }
+
+  /**
+   * Convert AgentMessage history + new user message into Gemini Content array.
+   */
+  private buildContents(
+    history: AgentMessage[],
+    userMessage: string,
+  ): Content[] {
+    const contents: Content[] = [];
+
+    for (const msg of history) {
+      if (msg.role === "user") {
+        contents.push({ role: "user", parts: [{ text: msg.content }] });
+      } else if (msg.role === "agent") {
+        contents.push({ role: "model", parts: [{ text: msg.content }] });
+      }
+      // tool messages are handled inline during processing
+    }
+
+    contents.push({ role: "user", parts: [{ text: userMessage }] });
+    return contents;
+  }
+}
+
+/** Singleton orchestrator instance */
+let _orchestrator: AgentOrchestrator | null = null;
+
+export function getOrchestrator(): AgentOrchestrator {
+  if (!_orchestrator) {
+    _orchestrator = new AgentOrchestrator();
+  }
+  return _orchestrator;
+}

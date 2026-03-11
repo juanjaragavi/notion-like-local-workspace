@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Notion Workspace — macOS App Launcher
+# Opens Terminal.app and runs workspace-start.sh
+
+PROJECT_ROOT="/Users/macbookpro/GitHub/notion-workspace"
+
+osascript -e "
+tell application \"Terminal\"
+    activate
+    set newTab to do script \"cd '$PROJECT_ROOT' && ./workspace-start.sh\"
+end tell
+"

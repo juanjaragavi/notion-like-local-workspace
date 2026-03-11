@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  mcp-server:
+    build:
+      context: ./mcp-server
+      dockerfile: Dockerfile
+    container_name: notion-mcp-server
+    ports:
+      - "3100:3100"
+    environment:
+      - MCP_PORT=3100
+      - HOME=/root
+    volumes:
+      # Mount host home directory read-write for file operations
+      - ${HOME}/Documents:/root/Documents
+      - ${HOME}/Desktop:/root/Desktop
+      - ${HOME}/Downloads:/root/Downloads
+      - ${HOME}/GitHub:/root/GitHub
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3100/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - workspace-net
+
+networks:
+  workspace-net:
+    driver: bridge
