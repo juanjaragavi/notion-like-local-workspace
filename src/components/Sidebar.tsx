@@ -68,25 +68,22 @@ export function Sidebar({
     >
       <div className="flex items-center justify-between p-4 border-b border-neutral-800">
         {!collapsed ? (
-          <div className="flex items-center gap-2 overflow-hidden">
+          <div className="flex items-center overflow-hidden">
             <Image
               src="/images/2-logo_blanco.png"
               alt="Logo"
-              width={20}
-              height={20}
+              width={120}
+              height={32}
               className="shrink-0 object-contain"
             />
-            <span className="font-semibold text-sm truncate">
-              Juan&apos;s Workspace
-            </span>
           </div>
         ) : (
           <div className="flex items-center justify-center w-full">
             <Image
               src="/images/2-logo_blanco.png"
               alt="Logo"
-              width={20}
-              height={20}
+              width={24}
+              height={24}
               className="shrink-0 object-contain"
             />
           </div>
