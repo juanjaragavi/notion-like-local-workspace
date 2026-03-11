@@ -15,6 +15,10 @@ export function getDb(): Pool {
           : undefined,
     });
 
+    _pool.on("error", (err) => {
+      console.error("PostgreSQL pool error:", err.message);
+    });
+
     const originalQuery = _pool.query.bind(_pool);
 
     _initPromise = initSchema(originalQuery)
