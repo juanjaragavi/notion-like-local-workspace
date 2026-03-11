@@ -1,11 +1,6 @@
 import type { AgentTool, AgentContext } from "../types";
 import { getDb } from "@/lib/db";
-import { v4 as uuidv4 } from "uuid";
-import { getGmailMessage, extractEmailBody, getHeader } from "@/lib/google";
-import {
-  parseTranscriptionEmail,
-  extractActionItems,
-} from "@/lib/transcription-parser";
+import { processTranscriptionEmailForWorkspace } from "@/lib/transcription-processing";
 
 export const listTranscriptions: AgentTool = {
   declaration: {
@@ -51,85 +46,22 @@ export const processTranscriptionEmail: AgentTool = {
   },
   handler: async (args: Record<string, unknown>, ctx: AgentContext) => {
     const emailId = args.emailId as string;
-    const db = getDb();
-
-    // Check if already processed
-    const existing = await db.query(
-      "SELECT id FROM transcriptions WHERE email_id = $1",
-      [emailId],
-    );
-    if (existing.rows.length > 0) {
-      return {
-        alreadyProcessed: true,
-        transcriptionId: (existing.rows[0] as { id: string }).id,
-      };
-    }
-
-    // Fetch the email
-    const msg = await getGmailMessage(
-      ctx.accessToken,
+    const result = await processTranscriptionEmailForWorkspace({
+      accessToken: ctx.accessToken,
+      refreshToken: ctx.refreshToken,
+      workspaceId: ctx.workspaceId,
       emailId,
-      ctx.refreshToken,
-    );
-    const headers = (msg.payload?.headers || []) as Array<{
-      name: string;
-      value: string;
-    }>;
-    const subject = getHeader(headers, "Subject");
-    const body = extractEmailBody(msg.payload as Record<string, unknown>);
-
-    // Parse transcription content
-    const parsed = parseTranscriptionEmail(subject, body);
-    const transcriptionId = uuidv4();
-
-    // Store transcription
-    await db.query(
-      `INSERT INTO transcriptions (id, email_id, meeting_title, meeting_date, participants, raw_content, summary, workspace_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [
-        transcriptionId,
-        emailId,
-        parsed.meetingTitle || subject,
-        parsed.meetingDate || new Date().toISOString(),
-        JSON.stringify(parsed.participants || []),
-        body.slice(0, 50000),
-        parsed.summary || null,
-        ctx.workspaceId,
-      ],
-    );
-
-    // Extract and store action items
-    const actionItems = extractActionItems(
-      body,
-      ctx.workspaceId,
-      "transcription",
-      transcriptionId,
-    );
-    for (const item of actionItems) {
-      await db.query(
-        `INSERT INTO action_items (id, title, description, status, priority, assignee, due_date, source_type, source_id, workspace_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-        [
-          item.id,
-          item.title,
-          item.description || null,
-          item.status,
-          item.priority,
-          item.assignee || null,
-          item.dueDate || null,
-          item.sourceType,
-          item.sourceId || null,
-          ctx.workspaceId,
-        ],
-      );
-    }
+    });
 
     return {
-      transcriptionId,
-      meetingTitle: parsed.meetingTitle || subject,
-      participantCount: parsed.participants?.length || 0,
-      actionItemsExtracted: actionItems.length,
-      summary: parsed.summary,
+      transcriptionId: result.transcription.id,
+      meetingTitle: result.transcription.meetingTitle,
+      participantCount: result.transcription.participants.length,
+      actionItemsExtracted: result.actionItems.length,
+      summary: result.transcription.summary,
+      sourceDocumentId: result.source.documentId,
+      sourceDocumentTitle: result.source.documentTitle,
+      alreadyProcessed: result.alreadyProcessed,
     };
   },
 };

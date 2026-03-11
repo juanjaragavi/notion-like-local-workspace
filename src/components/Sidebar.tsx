@@ -116,6 +116,7 @@ export function Sidebar({
               width={28}
               height={28}
               className="w-7 h-7 rounded-full"
+              referrerPolicy="no-referrer"
             />
           ) : (
             <div className="w-7 h-7 rounded-full bg-neutral-700 flex items-center justify-center text-xs">

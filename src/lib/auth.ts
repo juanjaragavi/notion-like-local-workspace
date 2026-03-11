@@ -20,10 +20,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             "email",
             "profile",
             "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/drive.readonly",
+            "https://www.googleapis.com/auth/documents.readonly",
             "https://www.googleapis.com/auth/calendar.readonly",
           ].join(" "),
           access_type: "offline",
-          prompt: "consent",
+          include_granted_scopes: "true",
+          prompt: "select_account",
         },
       },
     }),
@@ -107,6 +110,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
         token.provider = account.provider;
+        token.grantedScopes = account.scope
+          ? account.scope.split(/\s+/).filter(Boolean)
+          : token.grantedScopes;
       }
       const db = getDb();
       const resUser = await db.query("SELECT id FROM users WHERE email = $1", [
@@ -123,6 +129,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         s.refreshToken = token.refreshToken;
         s.userId = token.userId;
         s.provider = token.provider;
+        s.grantedScopes = token.grantedScopes;
       }
       return session;
     },

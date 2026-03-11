@@ -45,7 +45,7 @@ A personal AI-powered productivity workspace for macOS. Built with Next.js 16, G
 
 ## Project Structure
 
-```
+```text
 src/
 ├── app/                            # Next.js App Router
 │   ├── api/                        # REST API endpoints
@@ -207,6 +207,8 @@ Auto-initialized on first connection via `getDb()`. Tables:
 3. Configure the **OAuth Consent Screen** (External) with scopes:
    - `openid`, `email`, `profile`
    - `https://www.googleapis.com/auth/gmail.readonly`
+   - `https://www.googleapis.com/auth/drive.readonly`
+   - `https://www.googleapis.com/auth/documents.readonly`
    - `https://www.googleapis.com/auth/calendar.readonly`
 4. Create an **OAuth 2.0 Client ID** (Web application):
    - JavaScript origins: `http://localhost:3000`
@@ -239,7 +241,9 @@ npm install
 ./start.sh
 ```
 
-The app launches at **http://localhost:3000**. Sign in with Google to get started.
+The app launches at <http://localhost:3000>. Sign in with Google to get started.
+
+For meeting transcription workflows, Gmail notifications only contain links to Drive-hosted Google Docs. The authenticated session therefore needs Gmail, Drive, and Google Docs read scopes in the same consent flow so the orchestrator can detect the notification email, resolve the linked file, and read the transcription document text.
 
 ### MCP Server (Docker)
 

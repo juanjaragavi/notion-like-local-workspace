@@ -51,6 +51,7 @@ export default function SettingsPage() {
                   width={48}
                   height={48}
                   className="w-12 h-12 rounded-full"
+                  referrerPolicy="no-referrer"
                 />
               ) : (
                 <div className="w-12 h-12 rounded-full bg-neutral-700 flex items-center justify-center text-xl">
@@ -115,6 +116,8 @@ export default function SettingsPage() {
           <div className="bg-neutral-800 rounded-lg border border-neutral-700 p-4">
             <ul className="text-xs text-neutral-400 space-y-1 font-mono">
               <li>gmail.readonly</li>
+              <li>drive.readonly</li>
+              <li>documents.readonly</li>
               <li>calendar.readonly</li>
               <li>openid, email, profile</li>
             </ul>

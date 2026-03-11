@@ -5,6 +5,7 @@ import {
   extractEmailBody,
   getHeader,
   isTranscriptionEmail,
+  sendGmailMessage,
 } from "@/lib/google";
 
 export const searchEmails: AgentTool = {
@@ -109,4 +110,64 @@ export const readEmail: AgentTool = {
   },
 };
 
-export const gmailTools: AgentTool[] = [searchEmails, readEmail];
+export const sendEmail: AgentTool = {
+  declaration: {
+    name: "send_email",
+    description:
+      "Send a new email or reply to an existing email thread via Gmail. For replies, provide the original messageId and threadId.",
+    parametersJsonSchema: {
+      type: "object",
+      properties: {
+        to: {
+          type: "string",
+          description: "Recipient email address(es), comma-separated",
+        },
+        subject: {
+          type: "string",
+          description: "Email subject line",
+        },
+        body: {
+          type: "string",
+          description: "Plain text email body",
+        },
+        cc: {
+          type: "string",
+          description: "CC email address(es), comma-separated",
+        },
+        bcc: {
+          type: "string",
+          description: "BCC email address(es), comma-separated",
+        },
+        replyToMessageId: {
+          type: "string",
+          description:
+            "Message ID to reply to (use read_email to get this). Sets In-Reply-To header.",
+        },
+        threadId: {
+          type: "string",
+          description:
+            "Thread ID to keep the reply in the same conversation thread",
+        },
+      },
+      required: ["to", "subject", "body"],
+    },
+  },
+  handler: async (args: Record<string, unknown>, ctx: AgentContext) => {
+    const result = await sendGmailMessage(ctx.accessToken, ctx.refreshToken, {
+      to: args.to as string,
+      subject: args.subject as string,
+      body: args.body as string,
+      cc: args.cc as string | undefined,
+      bcc: args.bcc as string | undefined,
+      replyToMessageId: args.replyToMessageId as string | undefined,
+      threadId: args.threadId as string | undefined,
+    });
+    return {
+      id: result.id,
+      threadId: result.threadId,
+      status: "sent",
+    };
+  },
+};
+
+export const gmailTools: AgentTool[] = [searchEmails, readEmail, sendEmail];

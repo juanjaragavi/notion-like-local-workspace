@@ -24,6 +24,8 @@ Complete setup instructions for the Workspace application.
 2. Select **External** user type → **Create**
 3. Fill in App name, support email, developer contact
 4. **Scopes**: Add `openid`, `email`, `profile`, `gmail.readonly`, `calendar.readonly`
+   - Required for transcription ingestion: `https://www.googleapis.com/auth/gmail.readonly`, `https://www.googleapis.com/auth/drive.readonly`, `https://www.googleapis.com/auth/documents.readonly`
+   - Optional for calendar views: `https://www.googleapis.com/auth/calendar.readonly`
 5. **Test users**: Add your Gmail address
 
 ### 4. Create OAuth Credentials
@@ -58,6 +60,8 @@ npm install
 ```
 
 Open <http://localhost:3000>, sign in with Google, and verify Gmail/Calendar tabs work.
+
+For Gemini meeting transcriptions, verify that the Gmail notification email includes a Google Docs link and that the connected Google account granted Gmail, Drive, and Docs read scopes. The backend now follows the notification link through Drive metadata and reads the document body from Google Docs before extracting action items.
 
 ## Troubleshooting
 

@@ -6,23 +6,31 @@ export const subAgentConfigs: SubAgentConfig[] = [
     role: "email-analyst",
     systemPrompt: buildSubAgentPrompt(
       "email analysis specialist",
-      `Your job is to help the user search, read, and understand their Gmail inbox.
+      `Your job is to help the user search, read, understand, and compose emails in their Gmail inbox.
 Identify important emails, transcription emails, and summarize email content.
 When you find transcription emails, suggest processing them.
+You can also send new emails and reply to existing conversations.
 Always be concise and highlight actionable information.`,
     ),
-    toolNames: ["search_emails", "read_email"],
+    toolNames: ["search_emails", "read_email", "send_email"],
   },
   {
     role: "calendar-planner",
     systemPrompt: buildSubAgentPrompt(
       "calendar planning specialist",
-      `Your job is to help the user understand their schedule, find upcoming meetings, and identify scheduling conflicts.
+      `Your job is to help the user understand their schedule, find upcoming meetings, create new events, update existing events, and identify scheduling conflicts.
 Provide clear, time-ordered summaries of events.
 Highlight meetings with Google Meet links and note attendee counts.
-Proactively mention if the user has a busy day or free blocks.`,
+Proactively mention if the user has a busy day or free blocks.
+When creating events, infer sensible defaults for end time (1 hour after start) and time zone based on context.`,
     ),
-    toolNames: ["get_upcoming_events", "get_today_schedule"],
+    toolNames: [
+      "get_upcoming_events",
+      "get_today_schedule",
+      "create_calendar_event",
+      "update_calendar_event",
+      "delete_calendar_event",
+    ],
   },
   {
     role: "task-manager",

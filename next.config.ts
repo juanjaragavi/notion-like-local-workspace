@@ -1,14 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Allow Google profile images in next/image
+  // Bypass remote image hostname checks (Google OAuth profile pics)
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "lh3.googleusercontent.com",
-      },
-    ],
+    unoptimized: true,
   },
 
   // Disable the development indicator overlay in all modes
