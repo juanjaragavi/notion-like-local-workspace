@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { signOut } from "next-auth/react";
 import {
   LayoutDashboard,
   FileText,
@@ -16,7 +17,6 @@ import {
   Plus,
   Mic,
   LogOut,
-  Power,
   Sparkles,
 } from "lucide-react";
 
@@ -33,30 +33,13 @@ const NAV_ITEMS = [
 
 export function Sidebar({
   user,
-  isDev = true,
 }: {
   user: { name?: string | null; email?: string | null; image?: string | null };
-  isDev?: boolean;
 }) {
   const [collapsed, setCollapsed] = useState(false);
-  const [shuttingDown, setShuttingDown] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentTab = searchParams.get("tab");
-
-  const handleQuit = useCallback(async () => {
-    if (shuttingDown) return;
-    const confirmed = window.confirm(
-      "Quit Workspace?\n\nThis will stop the dev server and Cloud SQL Proxy. The page will become unreachable.",
-    );
-    if (!confirmed) return;
-    setShuttingDown(true);
-    try {
-      await fetch("/api/workspace/shutdown", { method: "POST" });
-    } catch {
-      // Expected — server dies before response completes
-    }
-  }, [shuttingDown]);
 
   return (
     <aside
@@ -153,34 +136,15 @@ export function Sidebar({
               </p>
             </div>
           )}
-          <button
-            onClick={() => {
-              window.location.href = "/api/auth/signout";
-            }}
-            className="cursor-pointer p-1 rounded hover:bg-neutral-800 text-neutral-500"
-            title="Sign out"
-          >
-            <LogOut size={14} />
-          </button>
         </div>
-        {isDev && (
-          <button
-            id="quit-workspace-btn"
-            onClick={handleQuit}
-            disabled={shuttingDown}
-            className={`flex cursor-pointer items-center gap-2 w-full mt-2 px-3 py-2 text-xs rounded transition-colors ${
-              shuttingDown
-                ? "bg-red-900/30 text-red-400 cursor-wait"
-                : "bg-red-950/40 hover:bg-red-900/60 text-red-400 hover:text-red-300"
-            }`}
-            title="Stop all services and quit"
-          >
-            <Power size={14} className={shuttingDown ? "animate-pulse" : ""} />
-            {!collapsed && (
-              <span>{shuttingDown ? "Shutting down…" : "Quit Workspace"}</span>
-            )}
-          </button>
-        )}
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="flex cursor-pointer items-center gap-2 w-full mt-2 px-3 py-2 text-xs rounded transition-colors text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200"
+          title="Sign out"
+        >
+          <LogOut size={14} />
+          {!collapsed && <span>Sign Out</span>}
+        </button>
       </div>
     </aside>
   );
