@@ -99,7 +99,7 @@ struct AgentChatView: View {
             } label: {
                 Image(systemName: "arrow.up.circle.fill")
                     .font(.title2)
-                    .foregroundStyle(canSend ? .accent : .secondary)
+                    .foregroundStyle(canSend ? Color.accentColor : Color.secondary)
             }
             .buttonStyle(.plain)
             .disabled(!canSend)
@@ -155,7 +155,7 @@ struct ChatBubble: View {
 
     private var bubbleBackground: Color {
         switch message.role {
-        case .user: .accentColor
+        case .user: Color.accentColor
         case .tool: Color.secondary.opacity(0.12)
         case .system: Color.red.opacity(0.12)
         default: Color.secondary.opacity(0.08)

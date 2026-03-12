@@ -97,7 +97,8 @@ struct FileBrowserView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 4) {
                 let components = breadcrumbComponents()
-                ForEach(Array(components.enumerated()), id: \.offset) { idx, (name, path) in
+                ForEach(Array(components.enumerated()), id: \.offset) { idx, element in
+                    let (name, path) = element
                     if idx > 0 {
                         Image(systemName: "chevron.right")
                             .font(.caption2)
@@ -221,7 +222,7 @@ struct FileRow: View {
     }
 
     private var iconColor: Color {
-        if item.isDirectory { return .accent }
+        if item.isDirectory { return Color.accentColor }
         switch item.ext {
         case "pdf": return .red
         case "png", "jpg", "jpeg", "gif", "webp", "heic": return .blue

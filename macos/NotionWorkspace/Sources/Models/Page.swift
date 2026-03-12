@@ -1,6 +1,6 @@
 import Foundation
 
-struct Page: Codable, Identifiable, Sendable {
+struct Page: Codable, Identifiable, Sendable, Hashable {
     let id: String
     let title: String
     let content: String?

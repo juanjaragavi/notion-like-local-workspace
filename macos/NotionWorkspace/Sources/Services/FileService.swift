@@ -24,7 +24,7 @@ actor FileService {
 
     // MARK: – Listing
 
-    struct FileItem: Identifiable, Sendable {
+    struct FileItem: Identifiable, Sendable, Hashable {
         let id: String
         let name: String
         let path: String

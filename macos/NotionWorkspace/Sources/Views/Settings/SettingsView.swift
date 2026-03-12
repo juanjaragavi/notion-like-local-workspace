@@ -85,7 +85,7 @@ struct SettingsView: View {
         VStack(spacing: 16) {
             Image(systemName: "doc.text.fill")
                 .font(.system(size: 48))
-                .foregroundStyle(.accent)
+                .foregroundStyle(Color.accentColor)
 
             Text("Notion Workspace")
                 .font(.title2.bold())

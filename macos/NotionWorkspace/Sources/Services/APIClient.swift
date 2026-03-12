@@ -1,4 +1,5 @@
 import Foundation
+import Security
 
 /// URLSession-based client for all calls to the Next.js web API.
 /// Attaches the session token from Keychain as a Bearer header on every request.
@@ -119,7 +120,7 @@ actor APIClient {
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        if let token = AuthService.shared.sessionToken() {
+        if let token = keychainSessionToken() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         return request
@@ -131,6 +132,22 @@ actor APIClient {
             throw APIError.requestFailed(statusCode: http.statusCode)
         }
     }
+}
+
+/// Reads the session token directly from Keychain, bypassing any actor isolation.
+/// This mirrors AuthService's Keychain logic and is safe to call from any context.
+private func keychainSessionToken() -> String? {
+    let query: [CFString: Any] = [
+        kSecClass: kSecClassGenericPassword,
+        kSecAttrService: "com.topnetworks.notion-workspace",
+        kSecAttrAccount: "session-token",
+        kSecReturnData: true,
+        kSecMatchLimit: kSecMatchLimitOne,
+    ]
+    var result: AnyObject?
+    let status = SecItemCopyMatching(query as CFDictionary, &result)
+    guard status == errSecSuccess, let data = result as? Data else { return nil }
+    return String(data: data, encoding: .utf8)
 }
 
 struct EmptyResponse: Decodable {}

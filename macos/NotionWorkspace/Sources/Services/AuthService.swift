@@ -27,36 +27,96 @@ final class AuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
     // MARK: – Sign In
 
     func signIn() async throws {
-        guard let signInURL = URL(string: "\(baseURL)/api/auth/signin/google?callbackUrl=\(baseURL)/api/auth/native-callback") else {
+        // NextAuth v5 requires a CSRF token for the POST that initiates the
+        // provider OAuth redirect.  We must:
+        //   1. GET /api/auth/csrf  → receive csrfToken JSON + csrf cookie
+        //   2. POST /api/auth/signin/google with csrfToken + callbackUrl
+        //      → server responds 302 with Location: accounts.google.com/...
+        //   3. Open that Google authorization URL in ASWebAuthenticationSession
+        //      → after OAuth completes, Google redirects to
+        //        /api/auth/callback/google → native-callback →
+        //        notion-workspace://auth?token=<session-token>
+        //   4. ASWebAuthenticationSession intercepts the custom-scheme redirect
+        //      and delivers the URL to our completion handler.
+
+        let callbackURL = "\(baseURL)/api/auth/native-callback"
+
+        // --- Step 1: fetch CSRF token + cookie ---
+        guard let csrfURL = URL(string: "\(baseURL)/api/auth/csrf") else {
             throw AuthError.invalidURL
         }
-        guard let callbackScheme = URL(string: "notion-workspace://auth") else {
+        let csrfSession = URLSession(configuration: .ephemeral)
+        let (csrfData, _) = try await csrfSession.data(from: csrfURL)
+
+        struct CSRFResponse: Decodable { let csrfToken: String }
+        let csrfResponse = try JSONDecoder().decode(CSRFResponse.self, from: csrfData)
+        let csrfToken = csrfResponse.csrfToken
+
+        // The csrf cookie was stored in csrfSession's cookie jar automatically.
+
+        // --- Step 2: POST to initiate Google OAuth, capture the redirect URL ---
+        guard let signinURL = URL(string: "\(baseURL)/api/auth/signin/google") else {
             throw AuthError.invalidURL
+        }
+        var postRequest = URLRequest(url: signinURL)
+        postRequest.httpMethod = "POST"
+        postRequest.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        let encodedCallback = callbackURL
+            .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? callbackURL
+        postRequest.httpBody = "csrfToken=\(csrfToken)&callbackUrl=\(encodedCallback)".data(using: .utf8)
+
+        // Do NOT follow the redirect — we want the Location header (Google OAuth URL).
+        let noRedirectConfig = URLSessionConfiguration.ephemeral
+        let noRedirectSession = URLSession(
+            configuration: noRedirectConfig,
+            delegate: NoRedirectDelegate(),
+            delegateQueue: nil
+        )
+        // Copy csrf cookie into the no-redirect session's jar
+        if let cookies = csrfSession.configuration.httpCookieStorage?.cookies {
+            noRedirectSession.configuration.httpCookieStorage?.setCookies(
+                cookies, for: signinURL, mainDocumentURL: nil
+            )
+        }
+        let (_, redirectResponse) = try await noRedirectSession.data(for: postRequest)
+        guard
+            let httpRedirect = redirectResponse as? HTTPURLResponse,
+            let locationString = httpRedirect.value(forHTTPHeaderField: "Location"),
+            let googleAuthURL = URL(string: locationString)
+        else {
+            throw AuthError.oauthRedirectFailed
         }
 
-        let session = ASWebAuthenticationSession(
-            url: signInURL,
-            callbackURLScheme: callbackScheme.scheme
-        ) { [weak self] callbackURL, error in
-            guard let self else { return }
-            Task { @MainActor in
-                if let error {
-                    if (error as? ASWebAuthenticationSessionError)?.code == .canceledLogin { return }
-                    return
+        // --- Step 3: open the Google authorization URL in ASWebAuthenticationSession ---
+        let weakSelf = WeakRef(self)
+        let authSession = ASWebAuthenticationSession(
+            url: googleAuthURL,
+            callbackURLScheme: "notion-workspace"
+        ) { callbackURL, error in
+            let capturedURL = callbackURL
+            let capturedError = error
+            Task.detached {
+                await MainActor.run {
+                    guard let auth = weakSelf.value else { return }
+                    if let err = capturedError {
+                        if (err as? ASWebAuthenticationSessionError)?.code == .canceledLogin { return }
+                        return
+                    }
+                    guard
+                        let url = capturedURL,
+                        let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+                        let token = components.queryItems?.first(where: { $0.name == "token" })?.value
+                    else { return }
+
+                    auth.saveTokenToKeychain(token)
+                    auth.isAuthenticated = true
+                    Task { try? await auth.fetchCurrentUser() }
                 }
-                guard let callbackURL,
-                      let components = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false),
-                      let token = components.queryItems?.first(where: { $0.name == "token" })?.value
-                else { return }
-
-                self.saveTokenToKeychain(token)
-                self.isAuthenticated = true
-                try? await self.fetchCurrentUser()
             }
         }
-        session.presentationContextProvider = self
-        session.prefersEphemeralWebBrowserSession = false
-        session.start()
+        authSession.presentationContextProvider = self
+        authSession.prefersEphemeralWebBrowserSession = false
+        authSession.start()
     }
 
     // MARK: – Sign Out
@@ -69,7 +129,7 @@ final class AuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
 
     // MARK: – Token Access
 
-    func sessionToken() -> String? {
+    nonisolated func sessionToken() -> String? {
         loadTokenFromKeychain()
     }
 
@@ -107,12 +167,17 @@ final class AuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
     // MARK: – ASWebAuthenticationPresentationContextProviding
 
     nonisolated func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        NSApplication.shared.windows.first ?? ASPresentationAnchor()
+        // ASWebAuthenticationPresentationContextProviding requires nonisolated,
+        // but NSApplication.shared is @MainActor.  Use assumeIsolated since this
+        // callback is always invoked on the main thread by AuthenticationServices.
+        MainActor.assumeIsolated {
+            NSApplication.shared.windows.first ?? ASPresentationAnchor()
+        }
     }
 
     // MARK: – Keychain Helpers
 
-    private func saveTokenToKeychain(_ token: String) {
+    nonisolated private func saveTokenToKeychain(_ token: String) {
         let data = Data(token.utf8)
         let query: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
@@ -124,7 +189,7 @@ final class AuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
         SecItemAdd(query as CFDictionary, nil)
     }
 
-    private func loadTokenFromKeychain() -> String? {
+    nonisolated private func loadTokenFromKeychain() -> String? {
         let query: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
             kSecAttrService: keychainService,
@@ -138,7 +203,7 @@ final class AuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
         return String(data: data, encoding: .utf8)
     }
 
-    private func deleteTokenFromKeychain() {
+    nonisolated private func deleteTokenFromKeychain() {
         let query: [CFString: Any] = [
             kSecClass: kSecClassGenericPassword,
             kSecAttrService: keychainService,
@@ -148,14 +213,37 @@ final class AuthService: NSObject, ObservableObject, ASWebAuthenticationPresenta
     }
 }
 
+/// A Sendable weak-reference wrapper that lets non-isolated closures hold a
+/// weak pointer to a @MainActor object without triggering Swift 6 isolation
+/// violations.  Only dereference `.value` from the MainActor.
+final class WeakRef<T: AnyObject>: @unchecked Sendable {
+    private(set) weak var value: T?
+    init(_ value: T) { self.value = value }
+}
+
 enum AuthError: LocalizedError {
-    case invalidURL, notAuthenticated, requestFailed
+    case invalidURL, notAuthenticated, requestFailed, oauthRedirectFailed
 
     var errorDescription: String? {
         switch self {
         case .invalidURL: "Invalid URL"
         case .notAuthenticated: "Not authenticated"
         case .requestFailed: "Request failed"
+        case .oauthRedirectFailed: "OAuth redirect failed — check server logs"
         }
+    }
+}
+
+/// URLSession delegate that prevents automatic redirect-following so we can
+/// capture the Location header from NextAuth's POST /signin/google response.
+private final class NoRedirectDelegate: NSObject, URLSessionTaskDelegate, Sendable {
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        willPerformHTTPRedirection response: HTTPURLResponse,
+        newRequest request: URLRequest
+    ) async -> URLRequest? {
+        // Return nil to block the redirect — caller reads Location from `response`.
+        return nil
     }
 }

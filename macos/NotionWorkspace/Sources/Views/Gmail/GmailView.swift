@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct GmailThread: Identifiable, Decodable, Sendable {
+struct GmailThread: Identifiable, Decodable, Sendable, Hashable {
     let id: String
     let subject: String
     let from: String

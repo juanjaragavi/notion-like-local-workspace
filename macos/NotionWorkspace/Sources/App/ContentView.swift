@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum SidebarItem: String, CaseIterable, Identifiable {
+enum SidebarItem: String, CaseIterable, Identifiable, Hashable {
     case pages = "Pages"
     case actionItems = "Action Items"
     case agent = "Agent"
@@ -73,7 +73,7 @@ struct LoginView: View {
         VStack(spacing: 24) {
             Image(systemName: "doc.text.fill")
                 .font(.system(size: 64))
-                .foregroundStyle(.accent)
+                .foregroundStyle(Color.accentColor)
 
             Text("Notion Workspace")
                 .font(.largeTitle.bold())
