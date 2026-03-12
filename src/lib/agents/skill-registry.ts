@@ -45,12 +45,7 @@ const DEFAULT_SKILLS: Omit<Skill, "id" | "createdAt">[] = [
       {
         agentRole: "document-writer",
         action: "create_page",
-        description: "Create presentation outline as a document",
-      },
-      {
-        agentRole: "system-control",
-        action: "run_applescript",
-        description: "Open Keynote with the presentation content",
+        description: "Create presentation outline as a structured document",
       },
     ],
     config: {
@@ -102,33 +97,6 @@ const DEFAULT_SKILLS: Omit<Skill, "id" | "createdAt">[] = [
       },
     ],
     config: { tone: "technical" },
-  },
-  {
-    name: "organize-directory",
-    description:
-      "Organize files in a directory by creating a structured folder hierarchy and moving files into appropriate locations based on type, date, or project.",
-    category: "file-management",
-    agentRole: "file-operations",
-    steps: [
-      {
-        agentRole: "file-operations",
-        action: "list_directory",
-        description: "Scan directory contents to understand current state",
-      },
-      {
-        agentRole: "file-operations",
-        action: "create_directory",
-        description: "Create organized subdirectory structure",
-      },
-      {
-        agentRole: "file-operations",
-        action: "move_file",
-        description: "Move files into appropriate subdirectories",
-      },
-    ],
-    config: {
-      defaultStructure: ["Documents", "Images", "Archives", "Other"],
-    },
   },
   {
     name: "daily-briefing",
@@ -186,7 +154,7 @@ const DEFAULT_SKILLS: Omit<Skill, "id" | "createdAt">[] = [
   {
     name: "save-and-share-document",
     description:
-      "Create a document in the workspace, save it to a local directory, and optionally email it to recipients.",
+      "Create a document in the workspace and optionally email it to recipients.",
     category: "workflow",
     agentRole: "document-writer",
     steps: [
@@ -196,45 +164,12 @@ const DEFAULT_SKILLS: Omit<Skill, "id" | "createdAt">[] = [
         description: "Create the document content in the workspace",
       },
       {
-        agentRole: "file-operations",
-        action: "write_local_file",
-        description: "Save a copy to the local file system",
-      },
-      {
         agentRole: "communication",
         action: "compose_email",
-        description: "Draft an email with the document attached or linked",
+        description: "Draft an email with the document linked",
       },
     ],
     config: { exportFormat: "text" },
-  },
-  {
-    name: "system-health-check",
-    description:
-      "Run a system health check: disk space, memory usage, running processes, and network status.",
-    category: "system",
-    agentRole: "system-control",
-    steps: [
-      {
-        agentRole: "system-control",
-        action: "get_system_info",
-        description: "Get overview of system resources",
-        params: { category: "overview" },
-      },
-      {
-        agentRole: "system-control",
-        action: "get_system_info",
-        description: "Check disk usage",
-        params: { category: "disk" },
-      },
-      {
-        agentRole: "system-control",
-        action: "get_system_info",
-        description: "Check memory status",
-        params: { category: "memory" },
-      },
-    ],
-    config: {},
   },
   {
     name: "schedule-meeting",
@@ -394,14 +329,7 @@ export class SkillRegistry {
             },
             category: {
               type: "string",
-              enum: [
-                "document",
-                "communication",
-                "file-management",
-                "system",
-                "calendar",
-                "workflow",
-              ],
+              enum: ["document", "communication", "calendar", "workflow"],
               description: "Filter by skill category.",
             },
           },

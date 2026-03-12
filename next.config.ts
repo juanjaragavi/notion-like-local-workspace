@@ -1,9 +1,22 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Bypass remote image hostname checks (Google OAuth profile pics)
+  // Prevent Next.js from bundling server-only Node.js packages.
+  // pg and cloud-sql-connector use native bindings / dynamic requires that
+  // must stay in the Node.js runtime layer and not be webpack-bundled.
+  serverExternalPackages: [
+    "pg",
+    "pg-native",
+    "@google-cloud/cloud-sql-connector",
+    "google-auth-library",
+  ],
+
+  // Allow Next.js Image optimization for known remote image hosts
   images: {
-    unoptimized: true,
+    remotePatterns: [
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      { protocol: "https", hostname: "storage.googleapis.com" },
+    ],
   },
 
   // Disable the development indicator overlay in all modes

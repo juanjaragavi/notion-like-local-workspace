@@ -36,10 +36,6 @@ const TAB_COPY: Record<string, { title: string; description: string }> = {
     title: "Transcriptions",
     description: "Review processed meeting notes and extracted tasks.",
   },
-  files: {
-    title: "Files",
-    description: "Navigate local files alongside Google Workspace context.",
-  },
 };
 
 export function DashboardShell({

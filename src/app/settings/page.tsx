@@ -130,11 +130,11 @@ export default function SettingsPage() {
           </h2>
           <div className="bg-neutral-800 rounded-lg border border-neutral-700 p-4 text-sm text-neutral-400">
             <p>
-              All data is stored locally in{" "}
+              All data is stored in a{" "}
               <code className="bg-neutral-900 px-1 rounded">
-                ~/.notion-workspace/workspace.db
+                PostgreSQL (Cloud SQL)
               </code>{" "}
-              (SQLite)
+              database.
             </p>
             <p className="mt-1">
               No data is sent to external servers beyond Google API calls.

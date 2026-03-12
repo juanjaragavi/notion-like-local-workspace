@@ -1,4 +1,4 @@
-import { CheckSquare, FileText, FolderOpen, Mic, Sparkles } from "lucide-react";
+import { CheckSquare, FileText, Mic, Sparkles } from "lucide-react";
 
 import { DashboardWidgets } from "@/components/dashboard/DashboardWidgets";
 import {
@@ -383,30 +383,6 @@ export async function DashboardHome({
               No transcriptions yet. Process a meeting email to get started.
             </p>
           )}
-        </a>
-
-        {/* Files widget */}
-        <a
-          href="/dashboard?tab=files"
-          className="group block overflow-hidden rounded-2xl border border-neutral-800 border-l-4 border-l-cyan-400/80 bg-neutral-900/70 p-5 transition-colors hover:border-neutral-700 hover:bg-neutral-900"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-cyan-500/25 bg-cyan-500/10 text-cyan-200">
-              <FolderOpen size={16} />
-            </div>
-            <div className="min-w-0">
-              <h3 className="text-sm font-medium text-white group-hover:text-cyan-300 transition-colors">
-                Files
-              </h3>
-              <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-200/75">
-                Local browser
-              </p>
-            </div>
-          </div>
-          <p className="mt-4 text-xs leading-relaxed text-neutral-400">
-            Browse local project directories and Google Drive files without
-            leaving the workspace.
-          </p>
         </a>
       </div>
     </div>

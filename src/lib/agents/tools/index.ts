@@ -4,8 +4,6 @@ import { calendarTools } from "./calendar-tools";
 import { actionItemTools } from "./action-items-tools";
 import { pageTools } from "./pages-tools";
 import { transcriptionTools } from "./transcription-tools";
-import { fileOperationsTools } from "./file-operations-tools";
-import { systemControlTools } from "./system-control-tools";
 
 /** All available tools across all domains */
 export const allTools: AgentTool[] = [
@@ -14,8 +12,6 @@ export const allTools: AgentTool[] = [
   ...actionItemTools,
   ...pageTools,
   ...transcriptionTools,
-  ...fileOperationsTools,
-  ...systemControlTools,
 ];
 
 /** Build a name→tool lookup registry */

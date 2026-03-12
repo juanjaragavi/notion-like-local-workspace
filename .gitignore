@@ -50,6 +50,7 @@ dist/
 # Notebooks
 
 lib/documents/document.md
+lib/documents/split-notion-workspace-app-into-web-app-and-native-macos-app.md
 
 # macos build artifacts
 macos/*.app/

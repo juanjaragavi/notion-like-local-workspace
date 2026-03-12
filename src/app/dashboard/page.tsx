@@ -5,7 +5,6 @@ import { CalendarPanel } from "@/components/CalendarPanel";
 import { GmailPanel } from "@/components/GmailPanel";
 import { ActionItemsPanel } from "@/components/ActionItemsPanel";
 import { TranscriptionsPanel } from "@/components/TranscriptionsPanel";
-import { FileBrowser } from "@/components/FileBrowser";
 import { PagesPanel } from "@/components/PagesPanel";
 import { AgentPanel } from "@/components/AgentPanel";
 import { DashboardHome } from "@/components/dashboard/DashboardHome";
@@ -45,9 +44,6 @@ export default async function DashboardPage({
       break;
     case "transcriptions":
       content = <TranscriptionsPanel />;
-      break;
-    case "files":
-      content = <FileBrowser />;
       break;
     case "pages":
       content = <PagesPanel />;

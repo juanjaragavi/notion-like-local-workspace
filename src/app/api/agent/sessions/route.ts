@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 /**
  * GET /api/agent/sessions — List agent sessions for the current user
@@ -38,7 +39,7 @@ export async function GET(req: NextRequest) {
     const result = await db.query(query, params);
     return NextResponse.json({ sessions: result.rows });
   } catch (err) {
-    console.error("[agent/sessions] GET error:", err);
+    logger.error("[agent/sessions] GET error", err);
     return NextResponse.json(
       { sessions: [], error: "Database error" },
       { status: 200 },
@@ -87,7 +88,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ id, status: "active", workspaceId: ws.id });
   } catch (err) {
-    console.error("[agent/sessions] POST error:", err);
+    logger.error("[agent/sessions] POST error", err);
     return NextResponse.json({ error: "Database error" }, { status: 500 });
   }
 }

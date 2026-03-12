@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useFetch } from "@/lib/hooks";
 import {
   CheckSquare,
@@ -41,13 +42,28 @@ export function ActionItemsPanel() {
     refetch,
   } = useFetch<ActionItemRow[]>("/api/action-items");
 
+  const [updateError, setUpdateError] = useState<string | null>(null);
+
   const updateStatus = async (id: string, status: string) => {
-    await fetch("/api/action-items", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, status }),
-    });
-    refetch();
+    setUpdateError(null);
+    try {
+      const res = await fetch("/api/action-items", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setUpdateError(
+          (data as { error?: string }).error ??
+            `Failed to update status (${res.status})`,
+        );
+        return;
+      }
+      refetch();
+    } catch {
+      setUpdateError("Network error — could not update action item");
+    }
   };
 
   if (loading)
@@ -59,6 +75,11 @@ export function ActionItemsPanel() {
       <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
         <CheckSquare size={20} /> Action Items
       </h2>
+      {updateError && (
+        <div className="mb-3 rounded bg-red-900/40 px-3 py-2 text-sm text-red-300">
+          {updateError}
+        </div>
+      )}
       {!items?.length ? (
         <p className="text-neutral-500 text-sm">
           No action items yet. Process a transcription or create one manually.

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { logger } from "@/lib/logger";
 
 import { GlobalWorkspaceSearch } from "@/components/GlobalWorkspaceSearch";
 import {
@@ -70,7 +71,9 @@ export function AgentPanel({ embedded = false }: { embedded?: boolean }) {
     if (sessionId) {
       try {
         sessionStorage.setItem("agent-active-session", sessionId);
-      } catch {}
+      } catch {
+        // sessionStorage unavailable
+      }
     }
   }, [sessionId]);
 
@@ -80,6 +83,7 @@ export function AgentPanel({ embedded = false }: { embedded?: boolean }) {
       try {
         return sessionStorage.getItem("agent-active-session");
       } catch {
+        // sessionStorage unavailable
         return null;
       }
     })();
@@ -103,11 +107,14 @@ export function AgentPanel({ embedded = false }: { embedded?: boolean }) {
             setMessages(loaded);
             setSessionId(stored);
           }
-        } catch {
+        } catch (err) {
           // Session no longer valid — start fresh
+          logger.warn("[AgentPanel] Could not restore session", err);
           try {
             sessionStorage.removeItem("agent-active-session");
-          } catch {}
+          } catch {
+            // sessionStorage unavailable
+          }
         } finally {
           setLoadingSession(false);
         }
@@ -160,7 +167,9 @@ export function AgentPanel({ embedded = false }: { embedded?: boolean }) {
     setHistoryOpen(false);
     try {
       sessionStorage.removeItem("agent-active-session");
-    } catch {}
+    } catch {
+      // sessionStorage unavailable
+    }
     inputRef.current?.focus();
   }, []);
 

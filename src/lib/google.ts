@@ -18,11 +18,21 @@ const tokenCache = getNamedCache<RefreshedToken>(
 );
 
 export function getOAuth2Client() {
+  // Derive the canonical redirect URI from the explicit env var, or fall back
+  // to building it from the app's base URL so it works on Vercel and locally.
+  const baseUrl =
+    process.env.GOOGLE_REDIRECT_URI ||
+    `${
+      process.env.NEXTAUTH_URL ||
+      (process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "http://localhost:3000")
+    }/api/auth/callback/google`;
+
   return new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_REDIRECT_URI ||
-      "http://localhost:3000/api/auth/callback/google",
+    baseUrl,
   );
 }
 

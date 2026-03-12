@@ -2,6 +2,7 @@ import { Firestore } from "@google-cloud/firestore";
 import { VertexAI } from "@google-cloud/vertexai";
 import { getDb } from "@/lib/db";
 import { v4 as uuidv4 } from "uuid";
+import { logger } from "@/lib/logger";
 
 // Initialize GCP services only if configured, otherwise fallback to local DB or mock
 const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT;
@@ -15,10 +16,7 @@ if (PROJECT_ID) {
     firestore = new Firestore({ projectId: PROJECT_ID });
     vertexAi = new VertexAI({ project: PROJECT_ID, location: LOCATION });
   } catch (e) {
-    console.warn(
-      "Failed to initialize GCP infrastructure for Agent Memory:",
-      e,
-    );
+    logger.warn("Failed to initialize GCP infrastructure for Agent Memory", e);
   }
 }
 
@@ -143,7 +141,7 @@ export async function extractAndStoreMemory(
       }
     }
   } catch (error) {
-    console.error("Vertex AI semantic memory extraction failed", error);
+    logger.error("Vertex AI semantic memory extraction failed", error);
   }
 }
 

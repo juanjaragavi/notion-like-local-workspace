@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
+import { logger } from "@/lib/logger";
 
 export default function DashboardError({
   error,
@@ -11,7 +12,7 @@ export default function DashboardError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[dashboard] Render error:", error);
+    logger.error("[dashboard] Render error", error);
   }, [error]);
 
   return (

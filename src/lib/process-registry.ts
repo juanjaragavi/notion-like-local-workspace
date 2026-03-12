@@ -18,6 +18,7 @@
  */
 
 import type { ChildProcess } from "child_process";
+import { logger } from "@/lib/logger";
 
 interface RegisteredProcess {
   process: ChildProcess;
@@ -89,7 +90,7 @@ class ProcessRegistry {
       return;
     }
 
-    console.log(
+    logger.info(
       `[process-registry] Tearing down ${entries.length} child process(es)…`,
     );
 
@@ -98,7 +99,7 @@ class ProcessRegistry {
       try {
         if (!entry.process.killed) {
           entry.process.kill("SIGTERM");
-          console.log(
+          logger.info(
             `[process-registry] SIGTERM → ${entry.label} (PID ${entry.process.pid})`,
           );
         }
@@ -120,7 +121,7 @@ class ProcessRegistry {
             const timeout = setTimeout(() => {
               try {
                 entry.process.kill("SIGKILL");
-                console.log(
+                logger.info(
                   `[process-registry] SIGKILL → ${entry.label} (PID ${entry.process.pid})`,
                 );
               } catch {
@@ -138,7 +139,7 @@ class ProcessRegistry {
     );
 
     this.registry.clear();
-    console.log("[process-registry] All child processes terminated.");
+    logger.info("[process-registry] All child processes terminated.");
   }
 
   // ── Signal binding ───────────────────────────────────────────────────
@@ -148,7 +149,7 @@ class ProcessRegistry {
     this.signalsBound = true;
 
     const handleSignal = (signal: string) => {
-      console.log(
+      logger.info(
         `\n[process-registry] Received ${signal} — initiating teardown…`,
       );
       this.teardown().finally(() => {

@@ -480,18 +480,6 @@ export class AgentOrchestrator {
         list_transcriptions: () => "Loading transcriptions",
         process_transcription_email: () => "Processing transcription email",
         read_transcription: () => "Reading transcription",
-        list_directory: (a) => `Listing files${a.path ? ` in ${a.path}` : ""}`,
-        read_local_file: (a) => `Reading file${a.path ? `: ${a.path}` : ""}`,
-        write_local_file: (a) => `Writing file${a.path ? `: ${a.path}` : ""}`,
-        create_directory: (a) =>
-          `Creating directory${a.path ? `: ${a.path}` : ""}`,
-        move_file: () => "Moving file",
-        delete_file: () => "Deleting file",
-        execute_shell_command: (a) =>
-          `Running command${a.command ? `: ${String(a.command).slice(0, 40)}` : ""}`,
-        run_applescript: () => "Running AppleScript",
-        get_system_info: () => "Getting system info",
-        open_application: (a) => `Opening ${a.name || "application"}`,
         discover_skills: () => "Discovering available skills",
       };
     const fn = descriptions[toolName];
@@ -508,7 +496,6 @@ export class AgentOrchestrator {
     if (Array.isArray(r.events)) return `Found ${r.events.length} event(s)`;
     if (Array.isArray(r.items)) return `Found ${r.items.length} item(s)`;
     if (Array.isArray(r.pages)) return `Found ${r.pages.length} page(s)`;
-    if (Array.isArray(r.files)) return `Found ${r.files.length} file(s)`;
     if (Array.isArray(r.skills)) return `Found ${r.skills.length} skill(s)`;
     if (r.id) return "Created successfully";
     if (r.success) return "Completed successfully";
@@ -534,16 +521,6 @@ export class AgentOrchestrator {
       list_transcriptions: "transcription-processor",
       process_transcription_email: "transcription-processor",
       read_transcription: "transcription-processor",
-      list_directory: "file-operations",
-      read_local_file: "file-operations",
-      write_local_file: "file-operations",
-      create_directory: "file-operations",
-      move_file: "file-operations",
-      delete_file: "file-operations",
-      execute_shell_command: "system-control",
-      run_applescript: "system-control",
-      get_system_info: "system-control",
-      open_application: "system-control",
     };
     return roleMap[toolName] || "document-writer";
   }

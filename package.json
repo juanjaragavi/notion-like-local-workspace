@@ -7,10 +7,11 @@
     "build": "next build",
     "start": "next start",
     "start:prod": "NODE_ENV=production next build && NODE_ENV=production next start",
-    "lint": "eslint . && prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
+    "lint": "NODE_OPTIONS='--max-old-space-size=4096' eslint . && prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\""
   },
   "dependencies": {
+    "@google-cloud/cloud-sql-connector": "^1.9.1",
     "@google-cloud/firestore": "^8.3.0",
     "@google-cloud/vertexai": "^1.10.0",
     "@google/genai": "^1.44.0",

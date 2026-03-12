@@ -3,8 +3,14 @@ import {
   buildSearchContextKey,
   setSearchContext,
 } from "@/lib/agents/search-context";
+
+// Allow up to 60 s on Vercel Hobby; Pro/Enterprise plans can increase this.
+// This is needed because the agent streams SSE responses that can take longer
+// than the default 10-second function timeout.
+export const maxDuration = 60;
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
+import { logger } from "@/lib/logger";
 import { getOrchestrator } from "@/lib/agents";
 import {
   getSessionHistory,
@@ -26,6 +32,12 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  if (!session.userId)
+    return NextResponse.json(
+      { error: "User session incomplete" },
+      { status: 401 },
+    );
 
   const userId = session.userId as string;
   const accessToken = session.accessToken as string;
@@ -214,7 +226,7 @@ export async function POST(req: NextRequest) {
             },
           });
         } catch (err) {
-          console.error("[Agent] Stream Error:", err);
+          logger.error("[Agent] Stream Error", err);
           emit({
             type: "error",
             data: {
@@ -309,7 +321,7 @@ export async function POST(req: NextRequest) {
       })),
     });
   } catch (err) {
-    console.error("[Agent] Error:", err);
+    logger.error("[Agent] Error", err);
     const message =
       err instanceof Error ? err.message : "Agent processing failed";
     return NextResponse.json({ error: message }, { status: 500 });

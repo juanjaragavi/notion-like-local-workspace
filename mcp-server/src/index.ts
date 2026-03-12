@@ -7,7 +7,8 @@ import type { MCPTool } from "./types";
 const app = express();
 app.use(express.json({ limit: "10mb" }));
 
-const PORT = parseInt(process.env.MCP_PORT || "3100", 10);
+// Cloud Run injects PORT; MCP_PORT is the local/custom fallback.
+const PORT = parseInt(process.env.PORT || process.env.MCP_PORT || "3100", 10);
 const SERVER_NAME = "notion-workspace-mcp";
 
 // Aggregate all tool definitions

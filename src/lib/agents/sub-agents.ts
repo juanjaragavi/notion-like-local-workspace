@@ -78,44 +78,6 @@ Help users find existing pages and update them.`,
     toolNames: ["list_pages", "read_page", "create_page", "update_page"],
   },
   {
-    role: "file-operations",
-    systemPrompt: buildSubAgentPrompt(
-      "file operations specialist",
-      `Your job is to manage files and directories on the local macOS file system.
-You can list, read, create, move, and delete files and directories.
-CRITICAL: Always confirm with the user before deleting files or overwriting existing files.
-Maintain backup awareness for critical documents.
-Use version control naming when creating iterations (e.g., document_v2.md).
-Verify file paths and permissions before execution.`,
-    ),
-    toolNames: [
-      "list_directory",
-      "read_local_file",
-      "write_local_file",
-      "create_directory",
-      "move_file",
-      "delete_file",
-    ],
-  },
-  {
-    role: "system-control",
-    systemPrompt: buildSubAgentPrompt(
-      "macOS system control specialist",
-      `Your job is to execute shell commands, control macOS applications, and monitor system resources.
-You can run shell commands, execute AppleScript, open applications, and gather system info.
-CRITICAL: Avoid executing commands that could compromise system stability.
-Verify destructive operations before execution.
-Alert the user to potential security implications of requested operations.
-Maintain awareness of resource-intensive tasks on M1 architecture.`,
-    ),
-    toolNames: [
-      "execute_shell_command",
-      "run_applescript",
-      "get_system_info",
-      "open_application",
-    ],
-  },
-  {
     role: "communication",
     systemPrompt: buildSubAgentPrompt(
       "communication specialist",

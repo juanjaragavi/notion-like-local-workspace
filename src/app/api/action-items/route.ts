@@ -8,6 +8,12 @@ export async function GET(req: NextRequest) {
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  if (!session.userId)
+    return NextResponse.json(
+      { error: "User session incomplete" },
+      { status: 401 },
+    );
+
   const userId = session.userId as string;
   const db = getDb();
   const resWs = await db.query(
@@ -42,6 +48,12 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  if (!session.userId)
+    return NextResponse.json(
+      { error: "User session incomplete" },
+      { status: 401 },
+    );
 
   const userId = session.userId as string;
   const db = getDb();

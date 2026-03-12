@@ -2,11 +2,16 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import { getDb } from "@/lib/db";
 import { v4 as uuidv4 } from "uuid";
+import { logger } from "@/lib/logger";
 
-// Hotfix: Force environment variables into the running process
-process.env.AUTH_SECRET =
-  process.env.NEXTAUTH_SECRET || "oRmw0FcAqMqsLiNsQAHQERtx0DVaBu/ajAeS8jgbZxM=";
-process.env.AUTH_URL = process.env.NEXTAUTH_URL || "http://localhost:3000";
+// Map NEXTAUTH_* vars to the AUTH_* names NextAuth v5 expects.
+// AUTH_SECRET is always required. AUTH_URL is only set explicitly when
+// NEXTAUTH_URL is present; otherwise NextAuth v5 auto-detects it from
+// VERCEL_URL in Vercel deployments.
+process.env.AUTH_SECRET = process.env.NEXTAUTH_SECRET;
+if (process.env.NEXTAUTH_URL) {
+  process.env.AUTH_URL = process.env.NEXTAUTH_URL;
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -127,7 +132,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
         }
       } catch (err) {
-        console.error("[auth] signIn DB error (allowing login anyway):", err);
+        logger.error("[auth] signIn DB error (allowing login anyway)", err);
       }
 
       return true;

@@ -14,8 +14,8 @@ COPY src/ ./src/
 RUN npx tsc
 
 # Expose MCP server port
+# Cloud Run sets PORT automatically; MCP_PORT is the local dev default.
+# The application reads: process.env.PORT || process.env.MCP_PORT || "3100"
 EXPOSE 3100
-
-ENV MCP_PORT=3100
 
 CMD ["node", "dist/index.js"]

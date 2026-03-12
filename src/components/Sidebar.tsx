@@ -10,7 +10,6 @@ import {
   CheckSquare,
   Mail,
   Calendar,
-  FolderOpen,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -29,7 +28,6 @@ const NAV_ITEMS = [
   { href: "/dashboard?tab=gmail", icon: Mail, label: "Gmail" },
   { href: "/dashboard?tab=calendar", icon: Calendar, label: "Calendar" },
   { href: "/dashboard?tab=transcriptions", icon: Mic, label: "Transcriptions" },
-  { href: "/dashboard?tab=files", icon: FolderOpen, label: "Files" },
   { href: "/settings", icon: Settings, label: "Settings" },
 ];
 

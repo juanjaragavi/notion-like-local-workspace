@@ -57,8 +57,6 @@ export type SubAgentRole =
   | "task-manager"
   | "transcription-processor"
   | "document-writer"
-  | "file-operations"
-  | "system-control"
   | "communication";
 
 /** Configuration for a sub-agent */
@@ -102,8 +100,6 @@ export interface AgentTaskRecord {
 export type SkillCategory =
   | "document"
   | "communication"
-  | "file-management"
-  | "system"
   | "calendar"
   | "workflow";
 
