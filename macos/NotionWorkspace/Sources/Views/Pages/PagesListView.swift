@@ -23,8 +23,8 @@ struct PagesListView: View {
                             Text(page.title)
                                 .font(.body)
                                 .lineLimit(1)
-                            if let updated = page.updatedAt {
-                                Text(updated, style: .relative)
+                            if let date = ISO8601DateFormatter().date(from: page.updatedAt) {
+                                Text(date, style: .relative)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }

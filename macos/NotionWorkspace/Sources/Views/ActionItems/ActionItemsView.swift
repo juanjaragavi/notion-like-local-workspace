@@ -202,15 +202,17 @@ struct ActionItemRow: View {
         let newStatus: ActionItemStatus = item.status == .completed ? .pending : .completed
         do {
             try await APIClient.shared.updateActionItem(id: item.id, status: newStatus)
-            var updated = item
-            // Create updated copy — ActionItem is a struct so we rebuild
+            // Rebuild the struct with only the status changed; all other fields are preserved.
             let copy = ActionItem(
                 id: item.id,
                 title: item.title,
+                description: item.description,
                 status: newStatus,
                 priority: item.priority,
                 dueDate: item.dueDate,
-                createdAt: item.createdAt
+                workspaceId: item.workspaceId,
+                createdAt: item.createdAt,
+                updatedAt: item.updatedAt
             )
             onUpdate(copy)
         } catch {

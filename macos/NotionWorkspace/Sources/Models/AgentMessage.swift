@@ -5,12 +5,15 @@ struct AgentMessage: Codable, Identifiable, Sendable {
     let role: AgentRole
     let content: String
     let timestamp: String
+    /// Transient UI flag — not persisted in the Codable representation.
+    var isThinking: Bool?
 
-    init(id: String = UUID().uuidString, role: AgentRole, content: String) {
+    init(id: String = UUID().uuidString, role: AgentRole, content: String, isThinking: Bool? = nil) {
         self.id = id
         self.role = role
         self.content = content
         self.timestamp = ISO8601DateFormatter().string(from: Date())
+        self.isThinking = isThinking
     }
 }
 
@@ -21,11 +24,15 @@ enum AgentRole: String, Codable, Sendable {
 // SSE stream event types from the web API
 struct AgentStreamEvent: Codable, Sendable {
     let type: AgentStreamEventType
-    let data: AgentStreamEventData
+    let data: AgentStreamEventData?
 }
 
 enum AgentStreamEventType: String, Codable, Sendable {
-    case status, tool_start, tool_complete, thinking, done, error
+    // swiftlint:disable identifier_name
+    case status
+    case toolStart = "tool_start"
+    case toolComplete = "tool_complete"
+    case thinking, done, error, sessionId
 }
 
 struct AgentStreamEventData: Codable, Sendable {
