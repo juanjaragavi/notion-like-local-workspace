@@ -147,16 +147,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           : token.grantedScopes;
       }
 
-      try {
-        const db = getDb();
-        const resUser = await db.query(
-          "SELECT id FROM users WHERE email = $1",
-          [token.email!],
-        );
-        const dbUser = resUser.rows[0] as { id: string } | undefined;
-        if (dbUser) token.userId = dbUser.id;
-      } catch {
-        // DB unavailable — userId will be populated on the next successful request
+      // Only resolve userId from DB when it is not already cached in the JWT.
+      // Without this guard the DB is queried on every request, and a single
+      // transient failure silently drops userId — causing 401s until the next
+      // successful sign-in.
+      if (!token.userId) {
+        try {
+          const db = getDb();
+          const resUser = await db.query(
+            "SELECT id FROM users WHERE email = $1",
+            [token.email!],
+          );
+          const dbUser = resUser.rows[0] as { id: string } | undefined;
+          if (dbUser) token.userId = dbUser.id;
+        } catch {
+          // DB unavailable — userId will be populated on the next successful request
+        }
       }
 
       return token;

@@ -57,3 +57,4 @@ lib/documents/split-notion-workspace-app-into-web-app-and-native-macos-app.md
 macos/*.app/
 .worktrees/
 vercel-sa-key.json
+serviceaccount.json
