@@ -25,8 +25,11 @@ export async function GET(req: NextRequest) {
   }
 
   const refreshToken = session.refreshToken as string | undefined;
-  const userKey =
-    (session.userId as string) || session.user?.email || "workspace";
+  if (!session.userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userKey = session.userId as string;
   const widget = req.nextUrl.searchParams.get("widget") || "overview";
   const pageToken = req.nextUrl.searchParams.get("pageToken") || undefined;
 

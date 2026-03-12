@@ -7,6 +7,9 @@ export async function GET() {
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  if (!session.userId)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const userId = session.userId as string;
   const db = getDb();
 

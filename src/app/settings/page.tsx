@@ -95,17 +95,6 @@ export default function SettingsPage() {
                 Optional
               </span>
             </div>
-            <div className="p-4 flex items-center justify-between">
-              <div>
-                <p className="font-medium text-sm">Local File System</p>
-                <p className="text-xs text-neutral-500">
-                  ~/GitHub, ~/Documents, ~/Desktop, Google Drive
-                </p>
-              </div>
-              <span className="px-2 py-1 bg-green-900/30 text-green-400 rounded text-xs">
-                Active
-              </span>
-            </div>
           </div>
         </section>
 

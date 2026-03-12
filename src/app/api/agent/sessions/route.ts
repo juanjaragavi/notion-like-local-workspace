@@ -12,8 +12,10 @@ export async function GET(req: NextRequest) {
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const userId = session.userId as string | undefined;
-  if (!userId) return NextResponse.json({ sessions: [] });
+  if (!session.userId)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const userId = session.userId as string;
 
   try {
     const db = getDb();
@@ -52,12 +54,10 @@ export async function POST(req: NextRequest) {
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const userId = session.userId as string | undefined;
-  if (!userId)
-    return NextResponse.json(
-      { error: "User ID not available" },
-      { status: 500 },
-    );
+  if (!session.userId)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const userId = session.userId as string;
 
   try {
     const db = getDb();

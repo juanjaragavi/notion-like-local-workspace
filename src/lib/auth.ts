@@ -159,7 +159,50 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             [token.email!],
           );
           const dbUser = resUser.rows[0] as { id: string } | undefined;
-          if (dbUser) token.userId = dbUser.id;
+          if (dbUser) {
+            token.userId = dbUser.id;
+          } else if (token.email) {
+            // User record missing — this happens when the DB was unavailable
+            // during the original sign-in callback. Self-heal by creating the
+            // user + workspace now so existing sessions don't stay broken.
+            const newUserId = uuidv4();
+            await db.query(
+              "INSERT INTO users (id, email, name, image, provider) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, image = EXCLUDED.image",
+              [
+                newUserId,
+                token.email,
+                token.name ?? null,
+                token.picture ?? null,
+                (token.provider as string) ?? "google",
+              ],
+            );
+            const resCreated = await db.query(
+              "SELECT id FROM users WHERE email = $1",
+              [token.email],
+            );
+            const createdUser = resCreated.rows[0] as
+              | { id: string }
+              | undefined;
+            if (createdUser) {
+              token.userId = createdUser.id;
+              // Ensure a workspace exists for this user.
+              const resWs = await db.query(
+                "SELECT id FROM workspaces WHERE owner_id = $1",
+                [createdUser.id],
+              );
+              if (!resWs.rows[0]) {
+                await db.query(
+                  "INSERT INTO workspaces (id, name, icon, owner_id) VALUES ($1, $2, $3, $4)",
+                  [
+                    uuidv4(),
+                    `${(token.name as string | undefined) ?? token.email}'s Workspace`,
+                    "📋",
+                    createdUser.id,
+                  ],
+                );
+              }
+            }
+          }
         } catch {
           // DB unavailable — userId will be populated on the next successful request
         }

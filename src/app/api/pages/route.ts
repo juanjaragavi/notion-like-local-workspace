@@ -9,10 +9,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   if (!session.userId)
-    return NextResponse.json(
-      { error: "User session incomplete" },
-      { status: 401 },
-    );
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const userId = session.userId as string;
   const db = getDb();
@@ -56,10 +53,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   if (!session.userId)
-    return NextResponse.json(
-      { error: "User session incomplete" },
-      { status: 401 },
-    );
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const userId = session.userId as string;
   const db = getDb();
@@ -98,6 +92,9 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const session = await auth();
   if (!session)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  if (!session.userId)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
@@ -139,6 +136,9 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const session = await auth();
   if (!session)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  if (!session.userId)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await req.json();

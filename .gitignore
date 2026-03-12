@@ -58,3 +58,4 @@ macos/*.app/
 .worktrees/
 vercel-sa-key.json
 serviceaccount.json
+.vercel

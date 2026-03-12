@@ -29,6 +29,10 @@ async function handleSearch(req: NextRequest, query: string) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (!session.userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const accessToken = session.accessToken as string | undefined;
   if (!accessToken) {
     return NextResponse.json(
