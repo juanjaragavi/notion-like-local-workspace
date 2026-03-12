@@ -1,0 +1,11 @@
+# Build outputs
+.next/
+out/
+dist/
+
+# Native macOS app (Xcode project — not managed by Prettier)
+macos/
+
+# Generated files
+*.xcodeproj/
+*.xcassets/

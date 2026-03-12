@@ -1,0 +1,484 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		054A5F92D5EE7D9B32951674 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F0CC58045543085C01B26A8 /* User.swift */; };
+		0E204CE15717C3EB11B76797 /* ActionItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CBEFBD5F4AF0BE2B44F90AB /* ActionItem.swift */; };
+		0F468F6DAE07EBCB1252865F /* Workspace.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5D2DF4DBFA766D6BC6F2309 /* Workspace.swift */; };
+		140C4925594E342528E230C3 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C405D647C0E21C4FE72D7752 /* APIClient.swift */; };
+		1CD6168FBCC00C7D6FFF10FF /* PageDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC43FAFDAE531CA2280BED3E /* PageDetailView.swift */; };
+		29DE7BB44C2CF11F23EDAB1A /* NotionWorkspaceApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6154E6365BE18120864CE9A /* NotionWorkspaceApp.swift */; };
+		386E380C16085B07E757CCAF /* GmailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C390426B9E09F6FDCC4153 /* GmailView.swift */; };
+		55531650EDD554D60EB17842 /* FileService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C185EFCDE5394DB5A62CE24 /* FileService.swift */; };
+		5DE363A6E97D63F25FB49293 /* FilePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EACC04023EBB647311A2E314 /* FilePreviewView.swift */; };
+		5EDB07A56581A772E91A6544 /* Page.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AE8EC0A363AF5A30BE38817 /* Page.swift */; };
+		657A3CE7A838747FA50EA516 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA6A36C6BBF0F425EAAD4025 /* ContentView.swift */; };
+		65F719209D023A632C19B33F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3C1B261DC6DF4742CE96194 /* SettingsView.swift */; };
+		6745DFC6C5A2958CB3EDF7E0 /* TiptapRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A45F29E5F9E2FD123E41AD0 /* TiptapRenderer.swift */; };
+		792DD10D9A85F066422D4024 /* AgentChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46766894C4DDCC55A062B88E /* AgentChatView.swift */; };
+		862FE82CD8AF16355D259FE9 /* AgentStreamHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 863DBE66A32B2D4189BA602D /* AgentStreamHandler.swift */; };
+		896DE3E7DD4146C37F0DF546 /* PagesListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C409D9FCF54AFD3770B1CF43 /* PagesListView.swift */; };
+		8C5B42D7D1922B4A219900B5 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34CC6D0906604A676A30A567 /* SidebarView.swift */; };
+		CA7A9E8E2DDB34E94D4AABE7 /* ActionItemsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A51A6701FAB5F264ECD7CF /* ActionItemsView.swift */; };
+		CA84A1964149EFC303B40DFD /* AgentMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B011B4B3848AABF41951ED0D /* AgentMessage.swift */; };
+		D1EA88AF8CC467D2D5C17052 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DC0E485E36F2CF7C179C399 /* AuthService.swift */; };
+		E188E4CD6B62A1C5D5112A88 /* FileBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99F71046E07754103EE9CA62 /* FileBrowserView.swift */; };
+		E9C43C22404CAE29DA0F2FB7 /* ShellService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 263CDC42C0A1FC53578C8212 /* ShellService.swift */; };
+		F11901D2B591B8AA8EFB4FD1 /* CalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E040A6F1E3BE58430B36ECF /* CalendarView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0AE8EC0A363AF5A30BE38817 /* Page.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Page.swift; sourceTree = "<group>"; };
+		0F0CC58045543085C01B26A8 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
+		263CDC42C0A1FC53578C8212 /* ShellService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellService.swift; sourceTree = "<group>"; };
+		339FFFDAEF02EBAC56BB1796 /* NotionWorkspace.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NotionWorkspace.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		34CC6D0906604A676A30A567 /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
+		45C390426B9E09F6FDCC4153 /* GmailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GmailView.swift; sourceTree = "<group>"; };
+		46766894C4DDCC55A062B88E /* AgentChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentChatView.swift; sourceTree = "<group>"; };
+		4C185EFCDE5394DB5A62CE24 /* FileService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileService.swift; sourceTree = "<group>"; };
+		6DC0E485E36F2CF7C179C399 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		863DBE66A32B2D4189BA602D /* AgentStreamHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentStreamHandler.swift; sourceTree = "<group>"; };
+		8E040A6F1E3BE58430B36ECF /* CalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarView.swift; sourceTree = "<group>"; };
+		99F71046E07754103EE9CA62 /* FileBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileBrowserView.swift; sourceTree = "<group>"; };
+		9A45F29E5F9E2FD123E41AD0 /* TiptapRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TiptapRenderer.swift; sourceTree = "<group>"; };
+		9CBEFBD5F4AF0BE2B44F90AB /* ActionItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionItem.swift; sourceTree = "<group>"; };
+		A5D2DF4DBFA766D6BC6F2309 /* Workspace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Workspace.swift; sourceTree = "<group>"; };
+		A6154E6365BE18120864CE9A /* NotionWorkspaceApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotionWorkspaceApp.swift; sourceTree = "<group>"; };
+		AC43FAFDAE531CA2280BED3E /* PageDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageDetailView.swift; sourceTree = "<group>"; };
+		B011B4B3848AABF41951ED0D /* AgentMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentMessage.swift; sourceTree = "<group>"; };
+		C0A51A6701FAB5F264ECD7CF /* ActionItemsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionItemsView.swift; sourceTree = "<group>"; };
+		C405D647C0E21C4FE72D7752 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		C409D9FCF54AFD3770B1CF43 /* PagesListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PagesListView.swift; sourceTree = "<group>"; };
+		E3C1B261DC6DF4742CE96194 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		EA6A36C6BBF0F425EAAD4025 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		EACC04023EBB647311A2E314 /* FilePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilePreviewView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		210A7E99C307D7BA13FC0A5B /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				574F58DD46E36904BFABEF02 /* ActionItems */,
+				D7C036D790DC3C6B4292621D /* Agent */,
+				D095C1C4165266C6E8C6388E /* Calendar */,
+				EE7878BBDAC64FBC9C12392D /* FileBrowser */,
+				78B6270F4D4BF881357FD5B5 /* Gmail */,
+				7A377F6F9BE0F42DFA1343A4 /* Pages */,
+				691BE0DB33320F60475A19F8 /* Settings */,
+				E367B96774799CBFD59A102F /* Sidebar */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		39F6F9FB85892F9A591DD5F0 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				339FFFDAEF02EBAC56BB1796 /* NotionWorkspace.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		474A28A7D57DC9D58A66B791 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				C405D647C0E21C4FE72D7752 /* APIClient.swift */,
+				6DC0E485E36F2CF7C179C399 /* AuthService.swift */,
+				4C185EFCDE5394DB5A62CE24 /* FileService.swift */,
+				263CDC42C0A1FC53578C8212 /* ShellService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		574F58DD46E36904BFABEF02 /* ActionItems */ = {
+			isa = PBXGroup;
+			children = (
+				C0A51A6701FAB5F264ECD7CF /* ActionItemsView.swift */,
+			);
+			path = ActionItems;
+			sourceTree = "<group>";
+		};
+		691BE0DB33320F60475A19F8 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				E3C1B261DC6DF4742CE96194 /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		78B6270F4D4BF881357FD5B5 /* Gmail */ = {
+			isa = PBXGroup;
+			children = (
+				45C390426B9E09F6FDCC4153 /* GmailView.swift */,
+			);
+			path = Gmail;
+			sourceTree = "<group>";
+		};
+		7A377F6F9BE0F42DFA1343A4 /* Pages */ = {
+			isa = PBXGroup;
+			children = (
+				AC43FAFDAE531CA2280BED3E /* PageDetailView.swift */,
+				C409D9FCF54AFD3770B1CF43 /* PagesListView.swift */,
+			);
+			path = Pages;
+			sourceTree = "<group>";
+		};
+		7D861C4C0C5A4C91D9FB6B58 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				9CBEFBD5F4AF0BE2B44F90AB /* ActionItem.swift */,
+				B011B4B3848AABF41951ED0D /* AgentMessage.swift */,
+				0AE8EC0A363AF5A30BE38817 /* Page.swift */,
+				0F0CC58045543085C01B26A8 /* User.swift */,
+				A5D2DF4DBFA766D6BC6F2309 /* Workspace.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		8537191296D7A8D1A77A35E2 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				EA6A36C6BBF0F425EAAD4025 /* ContentView.swift */,
+				A6154E6365BE18120864CE9A /* NotionWorkspaceApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		AF6EEF353AEEBF0D8AE4AC85 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				8537191296D7A8D1A77A35E2 /* App */,
+				7D861C4C0C5A4C91D9FB6B58 /* Models */,
+				474A28A7D57DC9D58A66B791 /* Services */,
+				CB08DBD6B4DAD1EFFD8FCC77 /* Utils */,
+				210A7E99C307D7BA13FC0A5B /* Views */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		CB08DBD6B4DAD1EFFD8FCC77 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				9A45F29E5F9E2FD123E41AD0 /* TiptapRenderer.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		D095C1C4165266C6E8C6388E /* Calendar */ = {
+			isa = PBXGroup;
+			children = (
+				8E040A6F1E3BE58430B36ECF /* CalendarView.swift */,
+			);
+			path = Calendar;
+			sourceTree = "<group>";
+		};
+		D2466537A979883499D103AA = {
+			isa = PBXGroup;
+			children = (
+				AF6EEF353AEEBF0D8AE4AC85 /* Sources */,
+				39F6F9FB85892F9A591DD5F0 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		D7C036D790DC3C6B4292621D /* Agent */ = {
+			isa = PBXGroup;
+			children = (
+				46766894C4DDCC55A062B88E /* AgentChatView.swift */,
+				863DBE66A32B2D4189BA602D /* AgentStreamHandler.swift */,
+			);
+			path = Agent;
+			sourceTree = "<group>";
+		};
+		E367B96774799CBFD59A102F /* Sidebar */ = {
+			isa = PBXGroup;
+			children = (
+				34CC6D0906604A676A30A567 /* SidebarView.swift */,
+			);
+			path = Sidebar;
+			sourceTree = "<group>";
+		};
+		EE7878BBDAC64FBC9C12392D /* FileBrowser */ = {
+			isa = PBXGroup;
+			children = (
+				99F71046E07754103EE9CA62 /* FileBrowserView.swift */,
+				EACC04023EBB647311A2E314 /* FilePreviewView.swift */,
+			);
+			path = FileBrowser;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		3CA1A0226FB200347D37F9D0 /* NotionWorkspace */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 42D2066DAABB9947C2CF60F2 /* Build configuration list for PBXNativeTarget "NotionWorkspace" */;
+			buildPhases = (
+				AA2D43F97853F6C392E8885B /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = NotionWorkspace;
+			packageProductDependencies = (
+			);
+			productName = NotionWorkspace;
+			productReference = 339FFFDAEF02EBAC56BB1796 /* NotionWorkspace.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E1E91E4D0486B86890AD8504 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					3CA1A0226FB200347D37F9D0 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 3E65458B3212E2437E0A0DF1 /* Build configuration list for PBXProject "NotionWorkspace" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = D2466537A979883499D103AA;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 39F6F9FB85892F9A591DD5F0 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				3CA1A0226FB200347D37F9D0 /* NotionWorkspace */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		AA2D43F97853F6C392E8885B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				140C4925594E342528E230C3 /* APIClient.swift in Sources */,
+				0E204CE15717C3EB11B76797 /* ActionItem.swift in Sources */,
+				CA7A9E8E2DDB34E94D4AABE7 /* ActionItemsView.swift in Sources */,
+				792DD10D9A85F066422D4024 /* AgentChatView.swift in Sources */,
+				CA84A1964149EFC303B40DFD /* AgentMessage.swift in Sources */,
+				862FE82CD8AF16355D259FE9 /* AgentStreamHandler.swift in Sources */,
+				D1EA88AF8CC467D2D5C17052 /* AuthService.swift in Sources */,
+				F11901D2B591B8AA8EFB4FD1 /* CalendarView.swift in Sources */,
+				657A3CE7A838747FA50EA516 /* ContentView.swift in Sources */,
+				E188E4CD6B62A1C5D5112A88 /* FileBrowserView.swift in Sources */,
+				5DE363A6E97D63F25FB49293 /* FilePreviewView.swift in Sources */,
+				55531650EDD554D60EB17842 /* FileService.swift in Sources */,
+				386E380C16085B07E757CCAF /* GmailView.swift in Sources */,
+				29DE7BB44C2CF11F23EDAB1A /* NotionWorkspaceApp.swift in Sources */,
+				5EDB07A56581A772E91A6544 /* Page.swift in Sources */,
+				1CD6168FBCC00C7D6FFF10FF /* PageDetailView.swift in Sources */,
+				896DE3E7DD4146C37F0DF546 /* PagesListView.swift in Sources */,
+				65F719209D023A632C19B33F /* SettingsView.swift in Sources */,
+				E9C43C22404CAE29DA0F2FB7 /* ShellService.swift in Sources */,
+				8C5B42D7D1922B4A219900B5 /* SidebarView.swift in Sources */,
+				6745DFC6C5A2958CB3EDF7E0 /* TiptapRenderer.swift in Sources */,
+				054A5F92D5EE7D9B32951674 /* User.swift in Sources */,
+				0F468F6DAE07EBCB1252865F /* Workspace.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		2BBC6A93512606AF91B4CC67 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Resources/NotionWorkspace.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		6789A40A315091224E16431E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Resources/NotionWorkspace.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		8D06BC131E75B0F7BA6BAC7E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.topnetworks.notion-workspace";
+				PRODUCT_NAME = NotionWorkspace;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		BA3ACC9E84514356F55A9A5A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.topnetworks.notion-workspace";
+				PRODUCT_NAME = NotionWorkspace;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		3E65458B3212E2437E0A0DF1 /* Build configuration list for PBXProject "NotionWorkspace" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8D06BC131E75B0F7BA6BAC7E /* Debug */,
+				BA3ACC9E84514356F55A9A5A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		42D2066DAABB9947C2CF60F2 /* Build configuration list for PBXNativeTarget "NotionWorkspace" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2BBC6A93512606AF91B4CC67 /* Debug */,
+				6789A40A315091224E16431E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E1E91E4D0486B86890AD8504 /* Project object */;
+}

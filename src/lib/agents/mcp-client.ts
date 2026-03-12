@@ -37,8 +37,12 @@ async function getIdentityToken(audience: string): Promise<string | null> {
     // getRequestHeaders() is typed as returning the Fetch API Headers class,
     // but the google-auth-library runtime value is a plain Record<string,string>.
     // Cast through unknown to satisfy the compiler without a suppression comment.
-    const rawHeaders = (await client.getRequestHeaders()) as unknown as Record<string, string>;
-    const authHeader = rawHeaders["Authorization"] ?? rawHeaders["authorization"];
+    const rawHeaders = (await client.getRequestHeaders()) as unknown as Record<
+      string,
+      string
+    >;
+    const authHeader =
+      rawHeaders["Authorization"] ?? rawHeaders["authorization"];
     if (!authHeader)
       throw new Error("No Authorization header from IdTokenClient");
     const token = authHeader.replace(/^Bearer\s+/i, "");

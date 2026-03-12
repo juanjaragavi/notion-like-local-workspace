@@ -45,13 +45,16 @@ async function setupPool(): Promise<Pool> {
     // mTLS tunnel inside the Node.js process — no external binary required.
     persistGCPCredentials();
 
-    const { Connector, AuthTypes } = await import("@google-cloud/cloud-sql-connector");
+    const { Connector, AuthTypes } =
+      await import("@google-cloud/cloud-sql-connector");
     const connector = new Connector();
     const connectorOpts = await connector.getOptions({
       instanceConnectionName: process.env.CLOUD_SQL_CONNECTION_NAME,
       // PASSWORD: for built-in DB users (e.g. 'postgres') with a password.
       // Switch to AuthTypes.IAM for IAM-principal DB users (no password needed).
-      authType: process.env.CLOUD_SQL_DB_PASS ? AuthTypes.PASSWORD : AuthTypes.IAM,
+      authType: process.env.CLOUD_SQL_DB_PASS
+        ? AuthTypes.PASSWORD
+        : AuthTypes.IAM,
     });
 
     pool = new Pool({
